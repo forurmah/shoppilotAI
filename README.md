@@ -168,4 +168,15 @@ Completed or implemented so far:
 **Planned improvements:**
 
 - Dynamic product listing in React
-- Product car
+- Product cards and category filters
+- Interactive size and color selection
+- Shopping cart functionality
+- Backend API and persistent inventory
+- AI-assisted product recommendations
+- Deployment and end-to-end testing
+
+## Current Status
+
+ShopPilot AI is an active portfolio project. The current development focus is building reliable product data, inventory business logic, and automated tests before expanding the customer-facing interface.
+
+AI shopping features are planned and are not yet part of the completed implementation.
