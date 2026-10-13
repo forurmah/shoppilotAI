@@ -13,6 +13,6 @@ export type Product = {
   category: string;
   price: number;
   currency: string;
-  images:[string];
+  images:string[];
   variants: ProductVariant[];
 };
