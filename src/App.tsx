@@ -1,4 +1,6 @@
-import Header from './components/Header';
+import Header from "./components/Header";
+import { ProductCard } from "./features/products/components/ProductCard";
+import { products } from "./features/products/data";
 
 function App() {
   return (
@@ -23,10 +25,15 @@ function App() {
           </a>
         </section>
 
+
         <section id="products">
           <h2>Our Products</h2>
-          <p>Our collection is coming soon.</p>
+
+          {products[0] && (
+            <ProductCard product={products[0]} />
+          )}
         </section>
+
 
         <section id="about">
           <h2>About Our Shop</h2>

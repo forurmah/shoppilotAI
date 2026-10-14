@@ -1,182 +1,52 @@
-# ShopPilot AI
+## Product Card Component
 
-An AI-powered shopping assistant and e-commerce application — under development.
+ShopPilot AI includes a reusable product card built with
+React and TypeScript.
 
-ShopPilot AI is a React and TypeScript project designed to help clothing stores manage product information, track inventory availability, and eventually provide customers with AI-assisted shopping experiences.
+### Features
 
-The project is being developed incrementally, with an emphasis on clean architecture, reusable business logic, automated testing, and practical software engineering.
+- Displays product images, categories, names, and prices
+- Uses a typed Product object as its input
+- Formats prices with Intl.NumberFormat
+- Handles missing product images with a fallback
+- Uses responsive styling
+- Supports different products without duplicating JSX
 
-## Tech Stack
+### Architecture
 
-- React — User interface development
-- TypeScript — Static typing and safer code
-- Vite — Development environment and build tooling
-- Vitest — Automated testing
-- CSS — Styling
-- pnpm— Package management
-- Git & GitHub — Version control
+src/features/products/
+├── types.ts
+├── data.ts
+└── components/
+    ├── ProductCard.tsx
+    ├── ProductCard.css
+    └── ProductCard.test.tsx
 
-## Implemented Features
+### Testing
 
-### Product Inventory
+ProductCard is tested using Vitest and React Testing Library.
 
-The application currently contains five sample clothing products:
+Test cases cover:
+- Product name rendering
+- Product category rendering
+- Missing image fallback
+- Currency formatting
+- Component updates when props change
 
-1. Essential Oversized Hoodie
-2. Classic Cotton T-Shirt
-3. Straight-Leg Jeans
-4. Everyday Jacket
-5. Relaxed Crewneck Sweatshirt
+Run all tests:
 
-Each product includes:
+    pnpm exec vitest run
 
-- Unique product ID
-- Name, description, and category
-- Price and currency
-- Product image references
-- Multiple color and size variants
-- Unique SKU for each variant
-- Variant-specific stock quantities
+Run the production build:
 
-### Inventory Availability
+    pnpm build
 
-Inventory is managed at the product-variant level.
+### Current Limitations
 
-For example, a black hoodie in size M can have different stock availability from a white hoodie in size M.
+The homepage currently displays one product card.
 
-The sample inventory includes three stock situations:
-
-| Stock quantity | Status |
-|---|---|
-| 0 | Sold out |
-| 1–3 | Low stock |
-| 4 or more | In stock |
-
-The low-stock threshold is a sample business rule and can be made configurable in a future implementation.
-
-### Product Data Operations
-
-The project uses TypeScript and JavaScript array methods to work with product information:
-
-- `.find()` — Locate a specific product
-- `.filter()` — Filter products or variants
-- `.map()` — Transform product information
-- `.flatMap()` — Collect variants across products
-- `Set` — Identify duplicate IDs and SKUs
-
-## Project Structure
-
-```text
-src/
-├── components/
-│   └── Header.tsx
-├── features/
-│   └── products/
-│       ├── types.ts
-│       ├── data.ts
-│       ├── data.test.ts
-│       ├── checkAvailability.ts
-│       └── checkAvailability.test.ts
-├── App.tsx
-├── index.css
-└── main.tsx
-
-public/
-└── images/
-    └── products/
-```
-
-## Architecture and Technical Decisions
-
-### Strongly Typed Product Models
-
-Product and variant types are defined separately from the inventory data.
-
-- `types.ts` defines the expected data structure.
-- `data.ts` contains the product inventory.
-- Inventory-related functions handle business logic independently of React components.
-
-This separation makes product information easier to maintain, test, and reuse.
-
-### Variant-Level Inventory
-
-Products contain arrays of variants rather than storing one stock quantity for the entire product.
-
-This allows different color and size combinations to have independent SKUs and inventory levels.
-
-### Automated Testing
-
-Vitest is used to verify important dataset requirements, including:
-
-- Expected product count
-- Minimum number of variants
-- Unique product IDs
-- Unique variant SKUs
-- Non-negative stock quantities
-- Positive product prices
-- Sold-out and low-stock sample data
-- Consistency between product and variant image references
-- Product lookup and filtering
-
-The goal is to catch incorrect inventory data early and reduce the risk of errors as the application grows.
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js
-- pnpm
-
-### Installation
-
-Clone the repository and enter the project directory.
-
-Install dependencies:
-
-```bash
-pnpm install
-```
-
-Start the development server:
-
-```bash
-pnpm dev
-```
-
-### Run Tests
-
-```bash
-pnpm exec vitest run
-```
-
-### Production Build
-
-```bash
-pnpm build
-```
-
-## Development Roadmap
-
-Completed or implemented so far:
-
-- Initial React + TypeScript setup
-- Product and variant data modeling
-- Five-product sample inventory
-- Inventory availability logic
-- Product dataset tests
-
-**Planned improvements:**
-
-- Dynamic product listing in React
-- Product cards and category filters
-- Interactive size and color selection
+Future development will include:
+- Rendering multiple products in a grid
+- Product variant selection
+- Stock availability integration
 - Shopping cart functionality
-- Backend API and persistent inventory
-- AI-assisted product recommendations
-- Deployment and end-to-end testing
-
-## Current Status
-
-ShopPilot AI is an active portfolio project. The current development focus is building reliable product data, inventory business logic, and automated tests before expanding the customer-facing interface.
-
-AI shopping features are planned and are not yet part of the completed implementation.
