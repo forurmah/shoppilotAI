@@ -29,8 +29,17 @@ function App() {
         <section id="products">
           <h2>Our Products</h2>
 
-          {products[0] && (
-            <ProductCard product={products[0]} />
+          {products.length === 0 ? (
+            <p>No products available yet.</p>
+          ) : (
+            <div className="product-grid">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                />
+              ))}
+            </div>
           )}
         </section>
 
