@@ -1,7 +1,6 @@
  .product-card {
   font-family:var(--font-body);
   width: 100%;
-  max-width: 320px;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   overflow: hidden;
@@ -26,7 +25,7 @@
 }
 
 .product-card__content {
-  padding: 16px;
+  padding: 12px;
 }
 
 .product-card__category {
@@ -36,15 +35,28 @@
 }
 
 .product-card__name {
-  margin: 0 0 12px;
-  font-size: 18px;
-  font-weight: 600;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
   color: #111827;
 }
 
 .product-card__price {
   margin: 0;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   color: #111827;
+}
+@media (min-width: 640px) {
+  .product-card__content {
+    padding: 16px;
+  }
+
+  .product-card__name {
+    font-size: 18px;
+  }
+
+  .product-card__price {
+    font-size: 20px;
+  }
 }

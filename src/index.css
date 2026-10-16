@@ -5,6 +5,11 @@
   --font-body: "Inter", sans-serif;
   --font-heading: "Playfair Display", Georgia, serif;
 }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 .hero {
   background-color: #f0f3ed;
@@ -48,6 +53,7 @@
 
 /* Global typography */
 body {
+  margin: 0;
   font-family: var(--font-body);
 }
 
@@ -72,18 +78,32 @@ textarea,
 select {
   font: inherit;
 }
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(min(100%, 240px), 1fr)
-  );
-  gap: 24px;
+#products {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 48px 16px;
 }
 
-@media (max-width: 600px) {
-  .hero {
-    padding: 64px 20px;
+/* Mobile first */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 12px;
+}
+
+/* Tablet */
+@media (min-width: 640px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
   }
 }

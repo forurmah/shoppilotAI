@@ -1,24 +1,58 @@
 .header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 6%;
-  background-color: white;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 20px 16px;
+  background-color: #fff;
+  border-bottom: 1px solid #e8ebe7;
 }
 
 .logo {
   margin: 0;
-  color: #193b31;
   font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+  color: #193b31;
+  white-space: nowrap;
+  text-decoration: none;
 }
 
 .nav {
   display: flex;
-  gap: 32px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
 }
 
 .nav a {
   color: #193b31;
   text-decoration: none;
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.nav a:hover {
+  color: #983d49;
+}
+
+.nav a:focus-visible,
+.logo:focus-visible {
+  outline: 2px solid #983d49;
+  outline-offset: 4px;
+}
+
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 6%;
+  }
+
+  .nav {
+    gap: 32px;
+  }
 }

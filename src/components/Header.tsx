@@ -2,7 +2,9 @@ import "./Header.css";
 function Header() {
   return (
     <header className="header">
-      <h1 className="logo">ShopPilot AI</h1>
+      <a href="#home" className="logo">
+        ShopPilot AI
+      </a>
 
       <nav className="nav">
         <a href="#home">Home</a>

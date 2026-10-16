@@ -168,7 +168,7 @@ export const everydayJacket: Product = {
 };
 export const relaxedSweatshirt: Product = {
   id: "sweatshirt-001",
-  name: "Relaxed Crewneck Sweatshirt",
+  name: "Relaxed Sweatshirt",
   description:
     "A soft cotton-blend sweatshirt with a relaxed fit for everyday comfort.",
   category: "Sweatshirts",
