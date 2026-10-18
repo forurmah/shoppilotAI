@@ -2,7 +2,7 @@ import type { Product } from "./types";
 
 export const hoodie: Product = {
   id: "hoodie-001",
-  name: "Essential Oversized Hoodie",
+  name: "Essential Oversized One",
   description: "Comfortable oversized cotton hoodie",
   category: "Hoodies",
   price: 49.99,
