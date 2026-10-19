@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Product } from "../types";
+import { checkAvailability } from "../checkAvailability";
 import "./ProductCard.css";
 
 type ProductCardProps = {
@@ -16,6 +17,11 @@ export function ProductCard({ product }: ProductCardProps) {
   const [selectedSize, setSelectedSize] = useState(
     firstVariant?.size ?? ""
   );
+  const availability =
+    selectedColor && selectedSize
+      ? checkAvailability(product, selectedColor, selectedSize)
+      : null;
+
 
   const colorOptions = [
     ...new Set(product.variants.map((variant) => variant.color)),
@@ -110,6 +116,18 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <p className="product-options__summary" aria-live="polite">
           Selected: {selectedColor || "—"} / {selectedSize || "—"}
+        </p>
+        <p
+          className="product-options__availability"
+          role="status"
+        >
+          {availability === null
+            ? "Select a color and size"
+            : availability === "in-stock"
+              ? "In stock"
+              : availability === "out-of-stock"
+                ? "Out of stock"
+                : "Combination unavailable"}
         </p>
       </div>
     </article>

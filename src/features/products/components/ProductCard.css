@@ -183,6 +183,12 @@
     padding: 7px 8px;
     font-size: 12px;
   }
+  .product-options__availability {
+    margin-top: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+  }
 
   .product-options__summary {
     font-size: 12px;
