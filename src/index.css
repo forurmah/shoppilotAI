@@ -89,6 +89,35 @@ select {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px;
 }
+.catalog__search {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+  margin: 24px 0 16px;
+}
+
+.catalog__search label {
+  font-weight: 600;
+}
+
+.catalog__search input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.catalog__search input:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.catalog__empty {
+  padding: 24px 0;
+  color: #6b7280;
+}
 
 @media (max-width: 1100px) {
   .product-grid {

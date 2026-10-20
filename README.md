@@ -100,6 +100,27 @@ The product grid manages layout, while individual ProductCard components handle 
 
 The header adapts its layout to smaller screens while maintaining readable and accessible navigation links.
 
+### Product Search
+
+- Real-time product filtering by name or category
+- Case-insensitive search
+- Whitespace handling for search queries
+- Dynamic product result count
+- Helpful empty state when no products match
+- Responsive search input
+
+### Technical Implementation
+
+Product search is implemented using React's `useState`
+and JavaScript's `filter()` method.
+
+The catalog component owns the search state and derives
+the filtered products during rendering, keeping the
+original product dataset unchanged.
+
+Search behavior is verified using Vitest and
+React Testing Library.
+
 ## Project Structure
 
 The main application follows a feature-oriented folder structure:
