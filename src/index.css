@@ -118,6 +118,35 @@ select {
   padding: 24px 0;
   color: #6b7280;
 }
+.catalog__categories {
+  border: 0;
+  padding: 0;
+  margin: 20px 0;
+  min-width: 0;
+}
+
+.catalog__categories legend {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.catalog__category-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.catalog__category-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.catalog__category-options input {
+  accent-color: #111;
+  cursor: pointer;
+}
 
 @media (max-width: 1100px) {
   .product-grid {

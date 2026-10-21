@@ -99,4 +99,130 @@ describe("Product catalog", () => {
       ).not.toBeInTheDocument();
     }
   });
+  it("shows only Hoodies when the category is selected", () => {
+    // ARRANGE
+    const hoodie = products.find(
+      (product) => product.category === "Hoodies"
+    );
+
+    const otherProduct = products.find(
+      (product) => product.category !== "Hoodies"
+    );
+
+    if (!hoodie || !otherProduct) {
+      throw new Error("Required test products are missing");
+    }
+
+    render(<App />);
+
+    // ACT
+    const hoodieRadio = screen.getByRole("radio", {
+      name: "Hoodies",
+    });
+
+    fireEvent.click(hoodieRadio);
+
+    // ASSERT
+    expect(
+      screen.getByRole("heading", { name: hoodie.name })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByRole("heading", {
+        name: otherProduct.name,
+      })
+    ).not.toBeInTheDocument();
+  });
+  it("restores all products when All is selected", () => {
+    // ARRANGE
+    const otherProduct = products.find(
+      (product) => product.category !== "Hoodies"
+    );
+
+    if (!otherProduct) {
+      throw new Error("A non-hoodie product is required");
+    }
+
+    render(<App />);
+
+    // ACT 1: Select Hoodies
+    fireEvent.click(
+      screen.getByRole("radio", { name: "Hoodies" })
+    );
+
+    // ASSERT 1: Another category is hidden
+    expect(
+      screen.queryByRole("heading", {
+        name: otherProduct.name,
+      })
+    ).not.toBeInTheDocument();
+
+    // ACT 2: Reset to All
+    fireEvent.click(
+      screen.getByRole("radio", { name: "All" })
+    );
+
+    // ASSERT 2: All products are restored
+    for (const product of products) {
+      expect(
+        screen.getByRole("heading", {
+          name: product.name,
+        })
+      ).toBeInTheDocument();
+    }
+  });
+  it("combines search and category filtering correctly", () => {
+    // ARRANGE
+    const hoodie = products.find(
+      (product) => product.category === "Hoodies"
+    );
+
+    const otherProduct = products.find(
+      (product) => product.category !== "Hoodies"
+    );
+
+    if (!hoodie || !otherProduct) {
+      throw new Error("Required test products are missing");
+    }
+
+    render(<App />);
+
+    // ACT 1: Search for the hoodie
+    const searchInput = screen.getByRole("searchbox", {
+      name: /search products/i,
+    });
+
+    fireEvent.change(searchInput, {
+      target: { value: hoodie.name },
+    });
+
+    // ACT 2: Select a different category
+    fireEvent.click(
+      screen.getByRole("radio", {
+        name: otherProduct.category,
+      })
+    );
+
+    // ASSERT 1: No products match both conditions
+    expect(
+      screen.getByRole("status")
+    ).toHaveTextContent("0 products found");
+
+    // ACT 3: Select Hoodies again
+    fireEvent.click(
+      screen.getByRole("radio", {
+        name: "Hoodies",
+      })
+    );
+
+    // ASSERT 2: Matching hoodie is restored
+    expect(
+      screen.getByRole("heading", {
+        name: hoodie.name,
+      })
+    ).toBeInTheDocument();
+
+    // ASSERT 3: Search query was preserved
+    expect(searchInput).toHaveValue(hoodie.name);
+  });
 });

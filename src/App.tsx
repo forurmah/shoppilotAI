@@ -5,6 +5,12 @@ import { products } from "./features/products/data";
 
 function App() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] =
+    useState("all");
+
+  const categories = [
+    ...new Set(products.map((product) => product.category)),
+  ];
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -17,9 +23,15 @@ function App() {
       .toLowerCase()
       .includes(normalizedQuery);
 
-    return matchesName || matchesCategory;
-  });
+    const matchesSelectedCategory =
+      selectedCategory === "all" ||
+      product.category === selectedCategory;
 
+    return (
+      (matchesName || matchesCategory) &&
+      matchesSelectedCategory
+    );
+  });
   return (
     <>
       <Header />
@@ -60,6 +72,35 @@ function App() {
               }
             />
           </div>
+          <fieldset className="catalog__categories">
+            <legend>Filter by category</legend>
+
+            <div className="catalog__category-options">
+              <label>
+                <input
+                  type="radio"
+                  name="category"
+                  value="all"
+                  checked={selectedCategory === "all"}
+                  onChange={() => setSelectedCategory("all")}
+                />
+                All
+              </label>
+
+              {categories.map((category) => (
+                <label key={category}>
+                  <input
+                    type="radio"
+                    name="category"
+                    value={category}
+                    checked={selectedCategory === category}
+                    onChange={() => setSelectedCategory(category)}
+                  />
+                  {category}
+                </label>
+              ))}
+            </div>
+          </fieldset>
 
           <p role="status">
             {filteredProducts.length}{" "}
@@ -74,7 +115,7 @@ function App() {
           ) : filteredProducts.length === 0 ? (
             <p className="catalog__empty">
               No products match your search.
-              Try another name or category.
+              Try a different search or category.
             </p>
           ) : (
             <div className="product-grid">
