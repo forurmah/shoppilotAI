@@ -6,6 +6,7 @@ import {
   screen,
   fireEvent,
   cleanup,
+  within
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
@@ -224,5 +225,31 @@ describe("Product catalog", () => {
 
     // ASSERT 3: Search query was preserved
     expect(searchInput).toHaveValue(hoodie.name);
+  });
+  it("sorts products by price from low to high", () => {
+    // ARRANGE
+    render(<App />);
+
+    // ACT
+    const sortSelect = screen.getByRole("combobox", {
+      name: /sort by/i,
+    });
+
+    fireEvent.change(sortSelect, {
+      target: { value: "price-low" },
+    });
+
+    // ASSERT
+    const actualNames = screen
+      .getAllByRole("article")
+      .map((card) =>
+        within(card).getByRole("heading").textContent
+      );
+
+    const expectedNames = [...products]
+      .sort((a, b) => a.price - b.price)
+      .map((product) => product.name);
+
+    expect(actualNames).toEqual(expectedNames);
   });
 });

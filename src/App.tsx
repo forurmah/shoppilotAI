@@ -3,17 +3,29 @@ import Header from "./components/Header";
 import { ProductCard } from "./features/products/components/ProductCard";
 import { products } from "./features/products/data";
 
+type SortOption =
+  | "default"
+  | "price-low"
+  | "price-high"
+  | "name-az";
+
 function App() {
+  // State
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] =
     useState("all");
+  const [sortOption, setSortOption] =
+    useState<SortOption>("default");
 
+  // Get unique categories
   const categories = [
     ...new Set(products.map((product) => product.category)),
   ];
 
+  // Normalize search query
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
+  // Step 1: Filter products
   const filteredProducts = products.filter((product) => {
     const matchesName = product.name
       .toLowerCase()
@@ -32,6 +44,24 @@ function App() {
       matchesSelectedCategory
     );
   });
+
+  // Step 2: Sort filtered products
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    switch (sortOption) {
+      case "price-low":
+        return a.price - b.price;
+
+      case "price-high":
+        return b.price - a.price;
+
+      case "name-az":
+        return a.name.localeCompare(b.name);
+
+      default:
+        return 0;
+    }
+  });
+
   return (
     <>
       <Header />
@@ -57,9 +87,10 @@ function App() {
         <section id="products" className="catalog">
           <h2>Our Products</h2>
 
+          {/* Search */}
           <div className="catalog__search">
             <label htmlFor="product-search">
-              Search products: 
+              Search products:
             </label>
 
             <input
@@ -72,6 +103,8 @@ function App() {
               }
             />
           </div>
+
+          {/* Category filtering */}
           <fieldset className="catalog__categories">
             <legend>Filter by category</legend>
 
@@ -94,7 +127,9 @@ function App() {
                     name="category"
                     value={category}
                     checked={selectedCategory === category}
-                    onChange={() => setSelectedCategory(category)}
+                    onChange={() =>
+                      setSelectedCategory(category)
+                    }
                   />
                   {category}
                 </label>
@@ -102,6 +137,36 @@ function App() {
             </div>
           </fieldset>
 
+          {/* Product sorting */}
+          <div className="catalog__sort">
+            <label htmlFor="product-sort">
+              Sort by
+            </label>
+
+            <select
+              id="product-sort"
+              value={sortOption}
+              onChange={(event) => {
+                setSortOption(
+                  event.target.value as SortOption
+                );
+              }}>
+              <option value="default">
+                Default order
+              </option>
+              <option value="price-low">
+                Price: Low to High
+              </option>
+              <option value="price-high">
+                Price: High to Low
+              </option>
+              <option value="name-az">
+                Name: A to Z
+              </option>
+            </select>
+          </div>
+
+          {/* Product count */}
           <p role="status">
             {filteredProducts.length}{" "}
             {filteredProducts.length === 1
@@ -110,6 +175,7 @@ function App() {
             found
           </p>
 
+          {/* Product grid */}
           {products.length === 0 ? (
             <p>No products available yet.</p>
           ) : filteredProducts.length === 0 ? (
@@ -119,7 +185,7 @@ function App() {
             </p>
           ) : (
             <div className="product-grid">
-              {filteredProducts.map((product) => (
+              {sortedProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}

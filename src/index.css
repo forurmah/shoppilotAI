@@ -147,6 +147,58 @@ select {
   accent-color: #111;
   cursor: pointer;
 }
+/* Product sorting */
+.catalog__sort {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.catalog__sort label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d382e;
+  white-space: nowrap;
+}
+
+.catalog__sort select {
+  width: 210px;
+  max-width: 100%;
+  padding: 12px 14px;
+
+  background-color: #fff;
+  color: #1d382e;
+
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.catalog__sort select:hover {
+  border-color: #596c60;
+}
+
+.catalog__sort select:focus-visible {
+  outline: 2px solid #1d382e;
+  outline-offset: 2px;
+}
+
+/* Mobile sorting */
+@media (max-width: 480px) {
+  .catalog__sort {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .catalog__sort select {
+    width: 100%;
+  }
+}
 
 @media (max-width: 1100px) {
   .product-grid {
