@@ -252,4 +252,59 @@ describe("Product catalog", () => {
 
     expect(actualNames).toEqual(expectedNames);
   });
+  it("sorts products by price from high to low", () => {
+    // ARRANGE
+    render(<App />);
+
+    // ACT
+    const sortSelect = screen.getByRole("combobox", {
+        name: /sort by/i,
+      });
+
+      fireEvent.change(sortSelect, {
+        target: { value: "price-high" },
+      });
+
+      // ASSERT
+      const actualNames = screen
+        .getAllByRole("article")
+        .map((card) =>
+          within(card).getByRole("heading").textContent
+        );
+
+      const expectedNames = [...products]
+        .sort((a, b) => b.price - a.price)
+        .map((product) => product.name);
+
+      expect(actualNames).toEqual(expectedNames);
+    });
+    
+  it("sorts products alphabetically from A to Z", () => {
+    // ARRANGE
+    render(<App />);
+
+    // ACT
+    const sortSelect = screen.getByRole("combobox", {
+      name: /sort by/i,
+    });
+
+    fireEvent.change(sortSelect, {
+      target: { value: "name-az" },
+    });
+
+    // ASSERT
+    const actualNames = screen
+      .getAllByRole("article")
+      .map((card) =>
+        within(card).getByRole("heading").textContent
+      );
+
+    const expectedNames = [...products]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((product) => product.name);
+
+    expect(actualNames).toEqual(expectedNames);
+  });
+
+
 });
