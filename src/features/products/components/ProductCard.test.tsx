@@ -1,10 +1,20 @@
+
 /** @vitest-environment jsdom */
 
-import { describe, it, expect, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  afterEach,
+  beforeEach,
+  vi,
+} from "vitest";
+
 import {
   render,
   screen,
   cleanup,
+  fireEvent,
 } from "@testing-library/react";
 
 import "@testing-library/jest-dom/vitest";
@@ -12,9 +22,14 @@ import "@testing-library/jest-dom/vitest";
 import { ProductCard } from "./ProductCard";
 import { products } from "../data";
 
-// Clean up rendered components after each test
+const onAddToCart = vi.fn();
+
 afterEach(() => {
   cleanup();
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
 });
 
 describe("ProductCard", () => {
@@ -26,7 +41,12 @@ describe("ProductCard", () => {
       throw new Error("Test product is missing");
     }
 
-    render(<ProductCard product={product} />);
+    render(
+      <ProductCard
+        product={product}
+        onAddToCart={onAddToCart}
+      />
+    );
 
     expect(
       screen.getByRole("heading", { name: product.name })
@@ -41,7 +61,12 @@ describe("ProductCard", () => {
       throw new Error("Test product is missing");
     }
 
-    render(<ProductCard product={product} />);
+    render(
+      <ProductCard
+        product={product}
+        onAddToCart={onAddToCart}
+      />
+    );
 
     expect(
       screen.getByText(product.category)
@@ -61,7 +86,12 @@ describe("ProductCard", () => {
       images: [],
     };
 
-    render(<ProductCard product={productWithoutImages} />);
+    render(
+      <ProductCard
+        product={productWithoutImages}
+        onAddToCart={onAddToCart}
+      />
+    );
 
     expect(
       screen.getByText("Image unavailable")
@@ -86,7 +116,12 @@ describe("ProductCard", () => {
       currency: "USD",
     };
 
-    render(<ProductCard product={testProduct} />);
+    render(
+      <ProductCard
+        product={testProduct}
+        onAddToCart={onAddToCart}
+      />
+    );
 
     expect(
       screen.getByText("$49.99")
@@ -119,9 +154,11 @@ describe("ProductCard", () => {
       currency: "USD",
     };
 
-    // Render the hoodie
     const { rerender } = render(
-      <ProductCard product={hoodie} />
+      <ProductCard
+        product={hoodie}
+        onAddToCart={onAddToCart}
+      />
     );
 
     expect(
@@ -134,10 +171,13 @@ describe("ProductCard", () => {
       screen.getByText("$49.99")
     ).toBeInTheDocument();
 
-    // Update the component with a different product
-    rerender(<ProductCard product={tshirt} />);
+    rerender(
+      <ProductCard
+        product={tshirt}
+        onAddToCart={onAddToCart}
+      />
+    );
 
-    // Verify the T-shirt information
     expect(
       screen.getByRole("heading", {
         name: "Classic Cotton T-Shirt",
@@ -152,11 +192,51 @@ describe("ProductCard", () => {
       screen.getByText("$24.99")
     ).toBeInTheDocument();
 
-    // Verify the old product name disappeared
     expect(
       screen.queryByRole("heading", {
         name: "Essential Oversized Hoodie",
       })
     ).not.toBeInTheDocument();
+  });
+
+  // TEST 6: Add to Cart interaction
+  it("calls onAddToCart with the selected product ID and variant SKU", () => {
+    const product = products[0];
+
+    if (!product) {
+      throw new Error("Test product is missing");
+    }
+
+    const firstVariant = product.variants[0];
+
+    if (!firstVariant) {
+      throw new Error("Test variant is missing");
+    }
+
+    if (firstVariant.stock <= 0) {
+      throw new Error("Test variant must be in stock");
+    }
+
+    render(
+      <ProductCard
+        product={product}
+        onAddToCart={onAddToCart}
+      />
+    );
+
+    const addToCartButton = screen.getByRole("button", {
+      name: /add to cart/i,
+    });
+
+    expect(addToCartButton).toBeEnabled();
+
+    fireEvent.click(addToCartButton);
+
+    expect(onAddToCart).toHaveBeenCalledTimes(1);
+
+    expect(onAddToCart).toHaveBeenCalledWith(
+      product.id,
+      firstVariant.sku
+    );
   });
 });

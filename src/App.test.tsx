@@ -6,7 +6,7 @@ import {
   screen,
   fireEvent,
   cleanup,
-  within
+  within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
@@ -18,6 +18,10 @@ afterEach(() => {
   cleanup();
 });
 
+// The results count renders as "5 products found" / "1 product found".
+// Matching by text keeps the tests independent of ARIA roles.
+const getResultsCount = () => screen.getByText(/^\d+ products? found$/);
+
 describe("Product catalog", () => {
   // TEST 1: Render all products
   it("renders every product from the dataset", () => {
@@ -28,11 +32,13 @@ describe("Product catalog", () => {
     render(<App />);
 
     // ASSERT
+    expect(getResultsCount()).toHaveTextContent(
+      `${products.length} products found`
+    );
+
     for (const product of products) {
       expect(
-        screen.getByRole("heading", {
-          name: product.name,
-        })
+        screen.getByRole("heading", { name: product.name })
       ).toBeInTheDocument();
     }
   });
@@ -59,14 +65,10 @@ describe("Product catalog", () => {
 
     // ASSERT
     expect(
-      screen.getByRole("heading", {
-        name: product.name,
-      })
+      screen.getByRole("heading", { name: product.name })
     ).toBeInTheDocument();
 
-    expect(
-      screen.getByText("1 product found")
-    ).toBeInTheDocument();
+    expect(screen.getByText("1 product found")).toBeInTheDocument();
   });
 
   // TEST 3: No matching products
@@ -88,18 +90,16 @@ describe("Product catalog", () => {
       screen.getByText(/no products match your search/i)
     ).toBeInTheDocument();
 
-    expect(
-      screen.getByText("0 products found")
-    ).toBeInTheDocument();
+    expect(screen.getByText("0 products found")).toBeInTheDocument();
 
     for (const product of products) {
       expect(
-        screen.queryByRole("heading", {
-          name: product.name,
-        })
+        screen.queryByRole("heading", { name: product.name })
       ).not.toBeInTheDocument();
     }
   });
+
+  // TEST 4: Category filter
   it("shows only Hoodies when the category is selected", () => {
     // ARRANGE
     const hoodie = products.find(
@@ -117,11 +117,7 @@ describe("Product catalog", () => {
     render(<App />);
 
     // ACT
-    const hoodieRadio = screen.getByRole("radio", {
-      name: "Hoodies",
-    });
-
-    fireEvent.click(hoodieRadio);
+    fireEvent.click(screen.getByRole("radio", { name: "Hoodies" }));
 
     // ASSERT
     expect(
@@ -129,11 +125,11 @@ describe("Product catalog", () => {
     ).toBeInTheDocument();
 
     expect(
-      screen.queryByRole("heading", {
-        name: otherProduct.name,
-      })
+      screen.queryByRole("heading", { name: otherProduct.name })
     ).not.toBeInTheDocument();
   });
+
+  // TEST 5: Reset category
   it("restores all products when All is selected", () => {
     // ARRANGE
     const otherProduct = products.find(
@@ -147,31 +143,25 @@ describe("Product catalog", () => {
     render(<App />);
 
     // ACT 1: Select Hoodies
-    fireEvent.click(
-      screen.getByRole("radio", { name: "Hoodies" })
-    );
+    fireEvent.click(screen.getByRole("radio", { name: "Hoodies" }));
 
     // ASSERT 1: Another category is hidden
     expect(
-      screen.queryByRole("heading", {
-        name: otherProduct.name,
-      })
+      screen.queryByRole("heading", { name: otherProduct.name })
     ).not.toBeInTheDocument();
 
     // ACT 2: Reset to All
-    fireEvent.click(
-      screen.getByRole("radio", { name: "All" })
-    );
+    fireEvent.click(screen.getByRole("radio", { name: "All" }));
 
     // ASSERT 2: All products are restored
     for (const product of products) {
       expect(
-        screen.getByRole("heading", {
-          name: product.name,
-        })
+        screen.getByRole("heading", { name: product.name })
       ).toBeInTheDocument();
     }
   });
+
+  // TEST 6: Search + category together
   it("combines search and category filtering correctly", () => {
     // ARRANGE
     const hoodie = products.find(
@@ -199,52 +189,38 @@ describe("Product catalog", () => {
 
     // ACT 2: Select a different category
     fireEvent.click(
-      screen.getByRole("radio", {
-        name: otherProduct.category,
-      })
+      screen.getByRole("radio", { name: otherProduct.category })
     );
 
     // ASSERT 1: No products match both conditions
-    expect(
-      screen.getByRole("status")
-    ).toHaveTextContent("0 products found");
+    expect(getResultsCount()).toHaveTextContent("0 products found");
 
     // ACT 3: Select Hoodies again
-    fireEvent.click(
-      screen.getByRole("radio", {
-        name: "Hoodies",
-      })
-    );
+    fireEvent.click(screen.getByRole("radio", { name: "Hoodies" }));
 
     // ASSERT 2: Matching hoodie is restored
     expect(
-      screen.getByRole("heading", {
-        name: hoodie.name,
-      })
+      screen.getByRole("heading", { name: hoodie.name })
     ).toBeInTheDocument();
 
     // ASSERT 3: Search query was preserved
     expect(searchInput).toHaveValue(hoodie.name);
   });
+
+  // TEST 7: Sort by price, low to high
   it("sorts products by price from low to high", () => {
     // ARRANGE
     render(<App />);
 
     // ACT
-    const sortSelect = screen.getByRole("combobox", {
-      name: /sort by/i,
-    });
+    const sortSelect = screen.getByRole("combobox", { name: /sort by/i });
 
-    fireEvent.change(sortSelect, {
-      target: { value: "price-low" },
-    });
+    fireEvent.change(sortSelect, { target: { value: "price-low" } });
 
     // ASSERT
     const actualNames = screen
       .getAllByRole("article")
-      .map((card) =>
-        within(card).getByRole("heading").textContent
-      );
+      .map((card) => within(card).getByRole("heading").textContent);
 
     const expectedNames = [...products]
       .sort((a, b) => a.price - b.price)
@@ -252,52 +228,43 @@ describe("Product catalog", () => {
 
     expect(actualNames).toEqual(expectedNames);
   });
+
+  // TEST 8: Sort by price, high to low
   it("sorts products by price from high to low", () => {
     // ARRANGE
     render(<App />);
 
     // ACT
-    const sortSelect = screen.getByRole("combobox", {
-        name: /sort by/i,
-      });
+    const sortSelect = screen.getByRole("combobox", { name: /sort by/i });
 
-      fireEvent.change(sortSelect, {
-        target: { value: "price-high" },
-      });
+    fireEvent.change(sortSelect, { target: { value: "price-high" } });
 
-      // ASSERT
-      const actualNames = screen
-        .getAllByRole("article")
-        .map((card) =>
-          within(card).getByRole("heading").textContent
-        );
+    // ASSERT
+    const actualNames = screen
+      .getAllByRole("article")
+      .map((card) => within(card).getByRole("heading").textContent);
 
-      const expectedNames = [...products]
-        .sort((a, b) => b.price - a.price)
-        .map((product) => product.name);
+    const expectedNames = [...products]
+      .sort((a, b) => b.price - a.price)
+      .map((product) => product.name);
 
-      expect(actualNames).toEqual(expectedNames);
-    });
-    
+    expect(actualNames).toEqual(expectedNames);
+  });
+
+  // TEST 9: Sort by name, A to Z
   it("sorts products alphabetically from A to Z", () => {
     // ARRANGE
     render(<App />);
 
     // ACT
-    const sortSelect = screen.getByRole("combobox", {
-      name: /sort by/i,
-    });
+    const sortSelect = screen.getByRole("combobox", { name: /sort by/i });
 
-    fireEvent.change(sortSelect, {
-      target: { value: "name-az" },
-    });
+    fireEvent.change(sortSelect, { target: { value: "name-az" } });
 
     // ASSERT
     const actualNames = screen
       .getAllByRole("article")
-      .map((card) =>
-        within(card).getByRole("heading").textContent
-      );
+      .map((card) => within(card).getByRole("heading").textContent);
 
     const expectedNames = [...products]
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -305,6 +272,4 @@ describe("Product catalog", () => {
 
     expect(actualNames).toEqual(expectedNames);
   });
-
-
 });

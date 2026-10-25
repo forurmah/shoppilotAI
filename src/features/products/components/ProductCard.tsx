@@ -5,9 +5,13 @@ import "./ProductCard.css";
 
 type ProductCardProps = {
   product: Product;
+  onAddToCart: (
+    productId: string,
+    variantSku: string
+  ) => void;
 };
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product ,onAddToCart}: ProductCardProps) {
   const firstVariant = product.variants[0];
 
   const [selectedColor, setSelectedColor] = useState(
@@ -21,7 +25,11 @@ export function ProductCard({ product }: ProductCardProps) {
     selectedColor && selectedSize
       ? checkAvailability(product, selectedColor, selectedSize)
       : null;
-
+  const selectedVariant = product.variants.find(
+    (variant) =>
+      variant.color === selectedColor &&
+      variant.size === selectedSize
+  );
 
   const colorOptions = [
     ...new Set(product.variants.map((variant) => variant.color)),
@@ -29,7 +37,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const sizeOptions = [
     ...new Set(product.variants.map((variant) => variant.size)),
-  ];
+    ];
 
   const imageUrl = product.images[0];
 
@@ -129,6 +137,19 @@ export function ProductCard({ product }: ProductCardProps) {
                 ? "Out of stock"
                 : "Combination unavailable"}
         </p>
+        <button
+          type="button"
+          className="product-card__add-to-cart"
+          disabled={availability !== "in-stock" }
+          onClick={()=> {
+             if(!selectedVariant || availability !== "in-stock"){
+              return;
+            }
+            onAddToCart(product.id,selectedVariant.sku)
+          }}
+        >
+          Add to Cart
+        </button>
       </div>
     </article>
   );
