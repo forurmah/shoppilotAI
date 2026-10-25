@@ -281,7 +281,6 @@ function App() {
             </div>
           )}
         </section>
-
         <section id="about">
           <h2>About Our Shop</h2>
         </section>

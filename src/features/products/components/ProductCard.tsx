@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import type { Product } from "../types";
 import { checkAvailability } from "../checkAvailability";
@@ -11,8 +12,14 @@ type ProductCardProps = {
   ) => void;
 };
 
-export function ProductCard({ product ,onAddToCart}: ProductCardProps) {
+export function ProductCard({
+  product,
+  onAddToCart,
+}: ProductCardProps) {
+  // Initialize selection using the first available variant
   const firstVariant = product.variants[0];
+
+
 
   const [selectedColor, setSelectedColor] = useState(
     firstVariant?.color ?? ""
@@ -21,33 +28,62 @@ export function ProductCard({ product ,onAddToCart}: ProductCardProps) {
   const [selectedSize, setSelectedSize] = useState(
     firstVariant?.size ?? ""
   );
-  const availability =
-    selectedColor && selectedSize
-      ? checkAvailability(product, selectedColor, selectedSize)
-      : null;
+
+  // Find the exact variant matching the selected color and size
   const selectedVariant = product.variants.find(
     (variant) =>
       variant.color === selectedColor &&
       variant.size === selectedSize
   );
 
+  // Check whether the selected combination is available
+  const availability =
+    selectedColor && selectedSize
+      ? checkAvailability(
+          product,
+          selectedColor,
+          selectedSize
+        )
+      : null;
+
+  // Get unique color and size options
   const colorOptions = [
-    ...new Set(product.variants.map((variant) => variant.color)),
+    ...new Set(
+      product.variants.map((variant) => variant.color)
+    ),
   ];
 
   const sizeOptions = [
-    ...new Set(product.variants.map((variant) => variant.size)),
-    ];
+    ...new Set(
+      product.variants.map((variant) => variant.size)
+    ),
+  ];
 
+  // Product image
   const imageUrl = product.images[0];
 
+  // Format price
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: product.currency,
   }).format(product.price);
 
+  // Disable adding unavailable or out-of-stock variants
+  const isAddToCartDisabled =
+    !selectedVariant || availability !== "in-stock";
+
+  // Handle Add to Cart
+  const handleAddToCartClick = () => {
+    if (!selectedVariant || isAddToCartDisabled) {
+      return;
+    }
+
+    onAddToCart(product.id, selectedVariant.sku);
+  };
+
   return (
     <article className="product-card">
+      {/* Product image */}
       {imageUrl ? (
         <img
           className="product-card__image"
@@ -62,6 +98,7 @@ export function ProductCard({ product ,onAddToCart}: ProductCardProps) {
       )}
 
       <div className="product-card__content">
+        {/* Product information */}
         <p className="product-card__category">
           {product.category}
         </p>
@@ -78,6 +115,7 @@ export function ProductCard({ product ,onAddToCart}: ProductCardProps) {
           {formattedPrice}
         </p>
 
+        {/* Color selection */}
         <fieldset className="product-options">
           <legend>Color</legend>
 
@@ -100,6 +138,7 @@ export function ProductCard({ product ,onAddToCart}: ProductCardProps) {
           </div>
         </fieldset>
 
+        {/* Size selection */}
         <fieldset className="product-options">
           <legend>Size</legend>
 
@@ -122,9 +161,16 @@ export function ProductCard({ product ,onAddToCart}: ProductCardProps) {
           </div>
         </fieldset>
 
-        <p className="product-options__summary" aria-live="polite">
-          Selected: {selectedColor || "—"} / {selectedSize || "—"}
+        {/* Selected variant summary */}
+        <p
+          className="product-options__summary"
+          aria-live="polite"
+        >
+          Selected: {selectedColor || "—"} /{" "}
+          {selectedSize || "—"}
         </p>
+
+        {/* Availability status */}
         <p
           className="product-options__availability"
           role="status"
@@ -137,19 +183,22 @@ export function ProductCard({ product ,onAddToCart}: ProductCardProps) {
                 ? "Out of stock"
                 : "Combination unavailable"}
         </p>
+
+
         <button
           type="button"
           className="product-card__add-to-cart"
-          disabled={availability !== "in-stock" }
-          onClick={()=> {
-             if(!selectedVariant || availability !== "in-stock"){
-              return;
-            }
-            onAddToCart(product.id,selectedVariant.sku)
-          }}
+          disabled={isAddToCartDisabled}
+          onClick={handleAddToCartClick}
         >
-          Add to Cart
+          {availability === "out-of-stock"
+            ? "Out of Stock"
+            : availability === "unavailable"
+              ? "Unavailable"
+              : "Add to Cart"}
         </button>
+
+
       </div>
     </article>
   );
