@@ -6,6 +6,7 @@ import { products } from "./features/products/data";
 import type { CartItem } from "./features/cart/types";
 import { addToCart } from "./features/cart/addToCart";
 import { checkAvailability } from "./features/products/checkAvailability";
+import { updateCartQuantity } from "./features/cart/updateCartQuantity";
 
 type SortOption =
   | "default"
@@ -54,7 +55,6 @@ function App() {
       return;
     }
 
-    // Reuse the existing availability logic
     const availability = checkAvailability(
       product,
       variant.color,
@@ -70,7 +70,6 @@ function App() {
       return;
     }
 
-    // Find the existing cart line for this exact variant
     const existingItem = cartItems.find(
       (item) =>
         item.productId === productId &&
@@ -79,7 +78,6 @@ function App() {
 
     const currentQuantity = existingItem?.quantity ?? 0;
 
-    // Prevent adding more units than the available stock
     if (currentQuantity >= variant.stock) {
       setCartMessage(
         `Stock limit reached. Only ${variant.stock} available.`
@@ -87,12 +85,46 @@ function App() {
       return;
     }
 
-    // Update using the latest cart state
     setCartItems((currentItems) =>
       addToCart(currentItems, productId, variantSku)
     );
 
     setCartMessage(`${product.name} added to cart.`);
+  };
+
+  // Handle increasing or decreasing cart quantity
+  const handleQuantityChange = (
+    productId: string,
+    variantSku: string,
+    change: 1 | -1
+  ) => {
+    const product = products.find(
+      (item) => item.id === productId
+    );
+
+    if (!product) {
+      setCartMessage("Product not found.");
+      return;
+    }
+
+    const variant = product.variants.find(
+      (item) => item.sku === variantSku
+    );
+
+    if (!variant) {
+      setCartMessage("Selected variant is unavailable.");
+      return;
+    }
+
+    setCartItems((currentItems) =>
+      updateCartQuantity(
+        currentItems,
+        productId,
+        variantSku,
+        change,
+        variant.stock
+      )
+    );
   };
 
   // Get unique categories
@@ -162,17 +194,17 @@ function App() {
           </a>
         </section>
 
+        {/* PRODUCT CATALOG */}
         <section id="products" className="catalog">
           <h2>Our Products</h2>
-
-          {/* Shopping cart summary */}
-          <p className="catalog__cart-count">
-            Cart ({cartCount})
-          </p>
 
           {cartMessage && (
             <p role="status">{cartMessage}</p>
           )}
+          {cartCount > 0 && (
+            <a href="#cart">View cart ({cartCount})</a>
+          )}
+
 
           {/* Search */}
           <div className="catalog__search">
@@ -281,6 +313,91 @@ function App() {
             </div>
           )}
         </section>
+
+              
+        {/* SHOPPING CART */}
+        <section id="cart" className="cart-section">
+          <h2>Your Cart ({cartCount})</h2>
+
+          {cartItems.length === 0 ? (
+            <p>Your cart is empty.</p>
+          ) : (
+            <div className="cart-items">
+              {cartItems.map((item) => {
+                // Find the product
+                const product = products.find(
+                  (product) => product.id === item.productId
+                );
+
+                // Find the selected variant
+                const variant = product?.variants.find(
+                  (variant) => variant.sku === item.variantSku
+                );
+
+                return (
+                  <div
+                    className="cart-item"
+                    key={`${item.productId}-${item.variantSku}`}
+                  >
+                    <div className="cart-item__info">
+                      <h3>{product?.name ?? "Unknown product"}</h3>
+
+                      <p>
+                        {variant
+                          ? `${variant.color} / ${variant.size}`
+                          : item.variantSku}
+                      </p>
+
+                      <p>
+                        Stock: {variant?.stock ?? "Unavailable"}
+                      </p>
+                    </div>
+
+                    <div className="cart-item__controls">
+                      <button
+                        type="button"
+                        aria-label={`Decrease quantity of ${item.variantSku}`}
+                        onClick={() =>
+                          handleQuantityChange(
+                            item.productId,
+                            item.variantSku,
+                            -1
+                          )
+                        }
+                        disabled={item.quantity <= 1 || !variant}
+                      >
+                        −
+                      </button>
+
+                      <span>{item.quantity}</span>
+
+                      <button
+                        type="button"
+                        aria-label={`Increase quantity of ${item.variantSku}`}
+                        onClick={() =>
+                          handleQuantityChange(
+                            item.productId,
+                            item.variantSku,
+                            1
+                          )
+                        }
+                        disabled={
+                          !variant ||
+                          item.quantity >= variant.stock
+                        }
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+
+        {/* ABOUT */}
         <section id="about">
           <h2>About Our Shop</h2>
         </section>
@@ -290,3 +407,4 @@ function App() {
 }
 
 export default App;
+

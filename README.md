@@ -68,6 +68,22 @@ The application emphasizes maintainable code, accessible interfaces, reusable Re
 - Mobile-friendly navigation.
 - Responsive hero section.
 
+### Shopping Cart
+
+- Add selected product variants to the cart
+- Merge repeated additions of the same variant
+- Increase and decrease item quantities
+- Enforce minimum quantity of 1
+- Prevent quantity increases beyond available stock
+- Display variant-specific inventory
+- Preserve immutable React state updates
+- Unit-tested cart business logic
+
+**Implementation:**
+Cart quantity calculations are handled by a pure
+TypeScript helper. React manages interaction and
+state updates separately.
+
 ## Responsive Layout
 
 ShopPilot AI uses mobile-first CSS and media queries to create a consistent shopping experience across different viewport sizes.
