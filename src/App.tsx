@@ -7,6 +7,7 @@ import type { CartItem } from "./features/cart/types";
 import { addToCart } from "./features/cart/addToCart";
 import { checkAvailability } from "./features/products/checkAvailability";
 import { updateCartQuantity } from "./features/cart/updateCartQuantity";
+import {removeFromCart} from "./features/cart/removefromcart";
 
 type SortOption =
   | "default"
@@ -91,13 +92,16 @@ function App() {
 
     setCartMessage(`${product.name} added to cart.`);
   };
+  const handleRemoveFromCart=(productId:string, variantSku:string)=>{
+    setCartItems((currentItems)=> removeFromCart(currentItems,productId,variantSku));
+  }
 
   // Handle increasing or decreasing cart quantity
-  const handleQuantityChange = (
+  const handleQuantityChange =  (
     productId: string,
     variantSku: string,
     change: 1 | -1
-  ) => {
+  ) =>{
     const product = products.find(
       (item) => item.id === productId
     );
@@ -387,6 +391,16 @@ function App() {
                         }
                       >
                         +
+                      </button>
+                      <button
+                        type="button"
+                        className="cart-item__remove"
+                        aria-label={`Remove ${item.variantSku} from cart`}
+                        onClick={() =>
+                          handleRemoveFromCart(item.productId, item.variantSku)
+                        }
+                      >
+                        Remove
                       </button>
                     </div>
                   </div>
