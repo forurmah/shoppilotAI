@@ -5,7 +5,7 @@ export const hoodie: Product = {
   name: "Essential Oversized One",
   description: "Comfortable oversized cotton hoodie",
   category: "Hoodies",
-  price: 49.99,
+  priceCents: 4999,
   currency: "USD",
 
   images: [
@@ -43,7 +43,7 @@ export const classicTshirt: Product = {
   description:
     "A comfortable everyday cotton T-shirt with a relaxed fit.",
   category: "T-Shirts",
-  price: 24.99,
+  priceCents: 2499,
   currency: "USD",
 
   images:[
@@ -81,7 +81,7 @@ export const straightLegJeans: Product = {
   description:
     "Classic straight-leg denim jeans designed for everyday comfort and style.",
   category: "Jeans",
-  price: 64.99,
+  priceCents: 6499,
   currency: "USD",
 
   images: [
@@ -127,7 +127,7 @@ export const everydayJacket: Product = {
   description:
     "A versatile lightweight jacket for casual outfits and everyday wear.",
   category: "Jackets",
-  price: 89.99,
+  priceCents:8999,
   currency: "USD",
 
   images: [
@@ -172,7 +172,7 @@ export const relaxedSweatshirt: Product = {
   description:
     "A soft cotton-blend sweatshirt with a relaxed fit for everyday comfort.",
   category: "Sweatshirts",
-  price: 54.99,
+  priceCents: 5499,
   currency: "USD",
 
   images: [

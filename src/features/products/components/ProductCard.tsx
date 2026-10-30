@@ -66,7 +66,7 @@ export function ProductCard({
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: product.currency,
-  }).format(product.price);
+  }).format(product.priceCents / 100);
 
   // Disable adding unavailable or out-of-stock variants
   const isAddToCartDisabled =

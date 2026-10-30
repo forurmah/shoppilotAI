@@ -104,29 +104,27 @@ describe("ProductCard", () => {
 
   // TEST 4: Formatted price
   it("displays the correctly formatted product price", () => {
-    const product = products[0];
+  const product = products[0];
 
-    if (!product) {
-      throw new Error("Test product is missing");
-    }
+  if (!product) {
+    throw new Error("Test product is missing");
+  }
 
-    const testProduct = {
-      ...product,
-      price: 49.99,
-      currency: "USD",
-    };
+  const testProduct = {
+    ...product,
+    priceCents: 4999,
+    currency: "USD",
+  };
 
-    render(
-      <ProductCard
-        product={testProduct}
-        onAddToCart={onAddToCart}
-      />
-    );
+  render(
+    <ProductCard
+      product={testProduct}
+      onAddToCart={onAddToCart}
+    />
+  );
 
-    expect(
-      screen.getByText("$49.99")
-    ).toBeInTheDocument();
-  });
+  expect(screen.getByText("$49.99")).toBeInTheDocument();
+});
 
   // TEST 5: Component reusability
   it("renders different products using the same component", () => {
@@ -141,7 +139,7 @@ describe("ProductCard", () => {
       id: "test-hoodie",
       name: "Essential Oversized Hoodie",
       category: "Hoodies",
-      price: 49.99,
+      priceCents: 4999,
       currency: "USD",
     };
 
@@ -150,7 +148,7 @@ describe("ProductCard", () => {
       id: "test-tshirt",
       name: "Classic Cotton T-Shirt",
       category: "T-Shirts",
-      price: 24.99,
+      priceCents: 2499,
       currency: "USD",
     };
 
@@ -168,8 +166,8 @@ describe("ProductCard", () => {
     ).toBeInTheDocument();
 
     expect(
-      screen.getByText("$49.99")
-    ).toBeInTheDocument();
+    screen.getByText("$49.99")
+  ).toBeInTheDocument();
 
     rerender(
       <ProductCard
@@ -188,9 +186,7 @@ describe("ProductCard", () => {
       screen.getByText("T-Shirts")
     ).toBeInTheDocument();
 
-    expect(
-      screen.getByText("$24.99")
-    ).toBeInTheDocument();
+    expect(screen.getByText("$24.99")).toBeInTheDocument();
 
     expect(
       screen.queryByRole("heading", {

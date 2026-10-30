@@ -11,7 +11,7 @@ export type Product = {
   name: string;
   description: string;
   category: string;
-  price: number;
+  priceCents: number;
   currency: string;
   images:string[];
   variants: ProductVariant[];

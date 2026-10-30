@@ -52,7 +52,7 @@ describe("Product dataset", () => {
   // Test 6: Every product must have a positive price
   it("should have positive product prices", () => {
     products.forEach((product) => {
-      expect(product.price).toBeGreaterThan(0);
+      expect(product.priceCents).toBeGreaterThan(0);
     });
   });
   // Test 7: Check sold-out inventory

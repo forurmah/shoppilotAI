@@ -223,7 +223,7 @@ describe("Product catalog", () => {
       .map((card) => within(card).getByRole("heading").textContent);
 
     const expectedNames = [...products]
-      .sort((a, b) => a.price - b.price)
+      .sort((a, b) => a.priceCents - b.priceCents)
       .map((product) => product.name);
 
     expect(actualNames).toEqual(expectedNames);
@@ -245,7 +245,7 @@ describe("Product catalog", () => {
       .map((card) => within(card).getByRole("heading").textContent);
 
     const expectedNames = [...products]
-      .sort((a, b) => b.price - a.price)
+      .sort((a, b) => b.priceCents - a.priceCents)
       .map((product) => product.name);
 
     expect(actualNames).toEqual(expectedNames);

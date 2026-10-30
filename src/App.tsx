@@ -8,6 +8,7 @@ import { addToCart } from "./features/cart/addToCart";
 import { checkAvailability } from "./features/products/checkAvailability";
 import { updateCartQuantity } from "./features/cart/updateCartQuantity";
 import {removeFromCart} from "./features/cart/removefromcart";
+import {calculateCartTotals} from"./features/cart/calculateCartTotals";
 
 type SortOption =
   | "default"
@@ -32,6 +33,10 @@ function App() {
     (total, item) => total + item.quantity,
     0
   );
+
+  const cartTotals = calculateCartTotals(cartItems, products);
+  const subtotalCents = cartTotals.subtotalCents;
+
 
   // Add a selected product variant to the cart
   const handleAddToCart = (
@@ -163,10 +168,10 @@ function App() {
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortOption) {
       case "price-low":
-        return a.price - b.price;
+        return a.priceCents - b.priceCents;
 
       case "price-high":
-        return b.price - a.price;
+        return b.priceCents - a.priceCents;
 
       case "name-az":
         return a.name.localeCompare(b.name);
@@ -318,97 +323,122 @@ function App() {
           )}
         </section>
 
-              
-        {/* SHOPPING CART */}
         <section id="cart" className="cart-section">
-          <h2>Your Cart ({cartCount})</h2>
+            <h2>Your Cart ({cartCount})</h2>
 
-          {cartItems.length === 0 ? (
-            <p>Your cart is empty.</p>
-          ) : (
-            <div className="cart-items">
-              {cartItems.map((item) => {
-                // Find the product
-                const product = products.find(
-                  (product) => product.id === item.productId
-                );
+            {cartItems.length === 0 ? (
+              <p>Your cart is empty.</p>
+            ) : (
+              <>
+                <div className="cart-items">
+                  {cartItems.map((item) => {
+                    // Find the product
+                    const product = products.find(
+                      (product) => product.id === item.productId
+                    );
 
-                // Find the selected variant
-                const variant = product?.variants.find(
-                  (variant) => variant.sku === item.variantSku
-                );
+                    // Find the selected variant
+                    const variant = product?.variants.find(
+                      (variant) => variant.sku === item.variantSku
+                    );
 
-                return (
-                  <div
-                    className="cart-item"
-                    key={`${item.productId}-${item.variantSku}`}
-                  >
-                    <div className="cart-item__info">
-                      <h3>{product?.name ?? "Unknown product"}</h3>
-
-                      <p>
-                        {variant
-                          ? `${variant.color} / ${variant.size}`
-                          : item.variantSku}
-                      </p>
-
-                      <p>
-                        Stock: {variant?.stock ?? "Unavailable"}
-                      </p>
-                    </div>
-
-                    <div className="cart-item__controls">
-                      <button
-                        type="button"
-                        aria-label={`Decrease quantity of ${item.variantSku}`}
-                        onClick={() =>
-                          handleQuantityChange(
-                            item.productId,
-                            item.variantSku,
-                            -1
-                          )
-                        }
-                        disabled={item.quantity <= 1 || !variant}
+                    return (
+                      <div
+                        className="cart-item"
+                        key={`${item.productId}-${item.variantSku}`}
                       >
-                        −
-                      </button>
+                        <div className="cart-item__info">
+                          <h3>{product?.name ?? "Unknown product"}</h3>
 
-                      <span>{item.quantity}</span>
+                          <p>
+                            {variant
+                              ? `${variant.color} / ${variant.size}`
+                              : item.variantSku}
+                          </p>
 
-                      <button
-                        type="button"
-                        aria-label={`Increase quantity of ${item.variantSku}`}
-                        onClick={() =>
-                          handleQuantityChange(
-                            item.productId,
-                            item.variantSku,
-                            1
-                          )
-                        }
-                        disabled={
-                          !variant ||
-                          item.quantity >= variant.stock
-                        }
-                      >
-                        +
-                      </button>
-                      <button
-                        type="button"
-                        className="cart-item__remove"
-                        aria-label={`Remove ${item.variantSku} from cart`}
-                        onClick={() =>
-                          handleRemoveFromCart(item.productId, item.variantSku)
-                        }
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                          <p>
+                            Stock: {variant?.stock ?? "Unavailable"}
+                          </p>
+                        </div>
+
+                        <div className="cart-item__controls">
+                          <button
+                            type="button"
+                            aria-label={`Decrease quantity of ${item.variantSku}`}
+                            onClick={() =>
+                              handleQuantityChange(
+                                item.productId,
+                                item.variantSku,
+                                -1
+                              )
+                            }
+                            disabled={item.quantity <= 1 || !variant}
+                          >
+                            −
+                          </button>
+
+                          <span>{item.quantity}</span>
+
+                          <button
+                            type="button"
+                            aria-label={`Increase quantity of ${item.variantSku}`}
+                            onClick={() =>
+                              handleQuantityChange(
+                                item.productId,
+                                item.variantSku,
+                                1
+                              )
+                            }
+                            disabled={
+                              !variant || item.quantity >= variant.stock
+                            }
+                          >
+                            +
+                          </button>
+
+                          <button
+                            type="button"
+                            className="cart-item__remove"
+                            aria-label={`Remove ${item.variantSku} from cart`}
+                            onClick={() =>
+                              handleRemoveFromCart(
+                                item.productId,
+                                item.variantSku
+                              )
+                            }
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* CART SUMMARY */}
+                <div className="cart-summary">
+                  <h3>Order Summary</h3>
+
+                  <p className="cart-summary__row">
+                    <span>Subtotal</span>
+
+                    <strong>
+                      {new Intl.NumberFormat("en-US", {
+                        style: "currency",
+                        currency: "USD",
+                      }).format(subtotalCents / 100)}
+                    </strong>
+                  </p>
+
+                  <p className="cart-summary__note">
+                    Shipping and taxes calculated at checkout.
+                  </p>
+                </div>
+              </>
+            )}
         </section>
+
+          
 
 
         {/* ABOUT */}
