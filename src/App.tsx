@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "./components/Header";
 import { ProductCard } from "./features/products/components/ProductCard";
 import { products } from "./features/products/data";
@@ -7,8 +7,9 @@ import type { CartItem } from "./features/cart/types";
 import { addToCart } from "./features/cart/addToCart";
 import { checkAvailability } from "./features/products/checkAvailability";
 import { updateCartQuantity } from "./features/cart/updateCartQuantity";
-import {removeFromCart} from "./features/cart/removefromcart";
-import {calculateCartTotals} from"./features/cart/calculateCartTotals";
+import { removeFromCart } from "./features/cart/removefromcart";
+import { calculateCartTotals } from "./features/cart/calculateCartTotals";
+import { loadCart, saveCart } from "./features/cart/cartStorage";
 
 type SortOption =
   | "default"
@@ -24,9 +25,14 @@ function App() {
   const [sortOption, setSortOption] =
     useState<SortOption>("default");
 
-  // Shopping cart state
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  // Shopping cart state with lazy localStorage initialization
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => loadCart());
   const [cartMessage, setCartMessage] = useState("");
+
+  // Persist cart changes to localStorage
+  useEffect(() => {
+    saveCart(cartItems);
+  }, [cartItems]);
 
   // Derived cart count: total units, not cart lines
   const cartCount = cartItems.reduce(

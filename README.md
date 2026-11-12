@@ -84,6 +84,16 @@ Cart quantity calculations are handled by a pure
 TypeScript helper. React manages interaction and
 state updates separately.
 
+### Cart Persistence (Local Storage)
+
+- Versioned localStorage key (`shoppilot_cart_v1`) supporting forward schema compatibility.
+- Lazy `useState` initialization (`loadCart()`) ensuring zero storage read lag or unnecessary re-renders.
+- Automated synchronization via `useEffect` whenever `cartItems` changes.
+- Runtime data validation (`isValidCartItem`) that strips malformed or corrupt items without crashing.
+- Storage failure resilience (handles disabled cookies, private browsing, quota limits, and JSON parse errors gracefully).
+- Selective persistence: only the minimal cart item state (`productId`, `variantSku`, `quantity`) is saved; derived totals, product data, and search filters remain unpersisted.
+
+
 ## Responsive Layout
 
 ShopPilot AI uses mobile-first CSS and media queries to create a consistent shopping experience across different viewport sizes.
@@ -148,6 +158,19 @@ src/
 │   └── Header.css
 │
 ├── features/
+│   ├── cart/
+│   │   ├── types.ts
+│   │   ├── cartStorage.ts
+│   │   ├── cartStorage.test.ts
+│   │   ├── addToCart.ts
+│   │   ├── addToCart.test.ts
+│   │   ├── updateCartQuantity.ts
+│   │   ├── updateCartQuantity.test.ts
+│   │   ├── removefromcart.ts
+│   │   ├── removefromcart.test.ts
+│   │   ├── calculateCartTotals.ts
+│   │   └── calculateCartTotals.test.ts
+│   │
 │   └── products/
 │       ├── components/
 │       │   ├── ProductCard.tsx
@@ -163,7 +186,7 @@ src/
 └── main.tsx
 ```
 
-Additional utility files and tests support inventory availability functionality.
+Additional utility files and tests support inventory availability functionality and persistent cart storage.
 
 This structure organizes related components, data, and logic within the same feature, improving maintainability as the application grows.
 
@@ -231,6 +254,16 @@ Verify inventory functionality for:
 - Available product variants.
 - Out-of-stock variants.
 - Nonexistent variants.
+
+### Cart Persistence Tests
+
+Verify local storage reliability and error resilience:
+
+- Versioned storage key conventions.
+- Runtime data validation preventing invalid structures.
+- Serialization and deserialization of cart items.
+- Graceful degradation on storage exceptions or malformed JSON.
+- Persistence across application re-renders and page refreshes.
 
 ### Component Tests
 

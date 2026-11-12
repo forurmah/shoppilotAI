@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import {
   render,
   screen,
@@ -12,10 +12,16 @@ import "@testing-library/jest-dom/vitest";
 
 import App from "./App";
 import { products } from "./features/products/data";
+import { CART_STORAGE_KEY } from "./features/cart/cartStorage";
 
-// Prevent rendered components from leaking between tests
+// Prevent rendered components and localStorage from leaking between tests
+beforeEach(() => {
+  window.localStorage.clear();
+});
+
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
 });
 
 // The results count renders as "5 products found" / "1 product found".
@@ -271,5 +277,119 @@ describe("Product catalog", () => {
       .map((product) => product.name);
 
     expect(actualNames).toEqual(expectedNames);
+  });
+});
+
+describe("Cart localStorage persistence", () => {
+  it("initializes cartItems lazily from localStorage on initial render", () => {
+    // ARRANGE: Pre-populate localStorage with a saved cart
+    const initialItems = [
+      {
+        productId: products[0].id,
+        variantSku: products[0].variants[0].sku,
+        quantity: 2,
+      },
+    ];
+    window.localStorage.setItem(
+      CART_STORAGE_KEY,
+      JSON.stringify(initialItems)
+    );
+
+    // ACT: Render App
+    render(<App />);
+
+    // ASSERT: Cart displays restored items and count
+    const cartHeading = screen.getByRole("heading", { name: /your cart \(2\)/i });
+    expect(cartHeading).toBeInTheDocument();
+    const cartSection = cartHeading.closest("section")!;
+    expect(within(cartSection).getByText(products[0].name)).toBeInTheDocument();
+  });
+
+  it("saves cart items to localStorage when a product is added to the cart", () => {
+    // ARRANGE
+    render(<App />);
+    const firstProduct = products[0];
+
+    // Find the add-to-cart button for the first product
+    const productCard = screen
+      .getAllByRole("article")
+      .find((card) => within(card).queryByRole("heading", { name: firstProduct.name }));
+
+    expect(productCard).toBeDefined();
+    const addButton = within(productCard!).getByRole("button", {
+      name: /add to cart/i,
+    });
+
+    // ACT: Add product to cart
+    fireEvent.click(addButton);
+
+    // ASSERT: localStorage contains the newly added product
+    const storedRaw = window.localStorage.getItem(CART_STORAGE_KEY);
+    expect(storedRaw).not.toBeNull();
+    const stored = JSON.parse(storedRaw!);
+    expect(stored).toEqual([
+      {
+        productId: firstProduct.id,
+        variantSku: firstProduct.variants[0].sku,
+        quantity: 1,
+      },
+    ]);
+  });
+
+  it("persists quantity changes to localStorage", () => {
+    // ARRANGE: Pre-populate with 1 item
+    const firstProduct = products[0];
+    const initialItems = [
+      {
+        productId: firstProduct.id,
+        variantSku: firstProduct.variants[0].sku,
+        quantity: 1,
+      },
+    ];
+    window.localStorage.setItem(
+      CART_STORAGE_KEY,
+      JSON.stringify(initialItems)
+    );
+
+    render(<App />);
+
+    // ACT: Click increase quantity (+) button
+    const increaseButton = screen.getByRole("button", {
+      name: new RegExp(`increase quantity of ${firstProduct.variants[0].sku}`, "i"),
+    });
+    fireEvent.click(increaseButton);
+
+    // ASSERT: localStorage is updated to quantity 2
+    const stored = JSON.parse(window.localStorage.getItem(CART_STORAGE_KEY)!);
+    expect(stored[0].quantity).toBe(2);
+  });
+
+  it("persists item removal to localStorage", () => {
+    // ARRANGE: Pre-populate with 1 item
+    const firstProduct = products[0];
+    const initialItems = [
+      {
+        productId: firstProduct.id,
+        variantSku: firstProduct.variants[0].sku,
+        quantity: 1,
+      },
+    ];
+    window.localStorage.setItem(
+      CART_STORAGE_KEY,
+      JSON.stringify(initialItems)
+    );
+
+    render(<App />);
+
+    // ACT: Click remove button
+    const removeButton = screen.getByRole("button", {
+      name: new RegExp(`remove ${firstProduct.variants[0].sku} from cart`, "i"),
+    });
+    fireEvent.click(removeButton);
+
+    // ASSERT: localStorage now contains an empty array
+    const stored = JSON.parse(window.localStorage.getItem(CART_STORAGE_KEY)!);
+    expect(stored).toEqual([]);
+    expect(screen.getByText(/your cart is empty/i)).toBeInTheDocument();
   });
 });
