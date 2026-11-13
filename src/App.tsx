@@ -26,7 +26,9 @@ function App() {
     useState<SortOption>("default");
 
   // Shopping cart state with lazy localStorage initialization
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => loadCart());
+  const [cartItems, setCartItems] = useState<CartItem[]>(() =>
+    loadCart(products)
+  );
   const [cartMessage, setCartMessage] = useState("");
 
   // Persist cart changes to localStorage

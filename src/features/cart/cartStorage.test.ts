@@ -5,9 +5,54 @@ import {
   CART_STORAGE_KEY,
   isValidCartItem,
   loadCart,
+  reconcileCartItems,
   saveCart,
 } from "./cartStorage";
 import type { CartItem } from "./types";
+import type { Product } from "../products/types";
+
+const testCatalog: Product[] = [
+  {
+    id: "prod-1",
+    name: "Essential Hoodie",
+    description: "Warm fleece hoodie",
+    category: "Hoodies",
+    priceCents: 4999,
+    currency: "USD",
+    images: ["/images/hoodie.jpeg"],
+    variants: [
+      {
+        sku: "sku-1",
+        color: "Black",
+        size: "M",
+        stock: 5,
+      },
+      {
+        sku: "sku-zero",
+        color: "White",
+        size: "M",
+        stock: 0,
+      },
+    ],
+  },
+  {
+    id: "prod-3",
+    name: "Classic T-Shirt",
+    description: "Cotton T-shirt",
+    category: "T-Shirts",
+    priceCents: 2499,
+    currency: "USD",
+    images: ["/images/tshirt.jpeg"],
+    variants: [
+      {
+        sku: "sku-3",
+        color: "Black",
+        size: "L",
+        stock: 3,
+      },
+    ],
+  },
+];
 
 describe("cartStorage", () => {
   beforeEach(() => {
@@ -26,7 +71,7 @@ describe("cartStorage", () => {
     it("returns true for a valid CartItem", () => {
       const validItem: CartItem = {
         productId: "prod-1",
-        variantSku: "sku-hoodie-black-m",
+        variantSku: "sku-1",
         quantity: 2,
       };
 
@@ -108,7 +153,7 @@ describe("cartStorage", () => {
       ).toBe(false);
     });
 
-    it("rejects items with invalid, non-integer, zero, or negative quantity", () => {
+    it("rejects items with invalid, non-integer, zero, negative, or non-finite quantity", () => {
       expect(
         isValidCartItem({
           productId: "prod-1",
@@ -148,6 +193,108 @@ describe("cartStorage", () => {
           quantity: NaN,
         })
       ).toBe(false);
+
+      expect(
+        isValidCartItem({
+          productId: "prod-1",
+          variantSku: "sku-1",
+          quantity: Infinity,
+        })
+      ).toBe(false);
+    });
+  });
+
+  describe("reconcileCartItems", () => {
+    it("preserves valid cart items without altering them", () => {
+      const items: CartItem[] = [
+        { productId: "prod-1", variantSku: "sku-1", quantity: 2 },
+        { productId: "prod-3", variantSku: "sku-3", quantity: 3 },
+      ];
+
+      const result = reconcileCartItems(items, testCatalog);
+      expect(result).toEqual(items);
+    });
+
+    it("discards items referencing nonexistent products", () => {
+      const items: CartItem[] = [
+        { productId: "removed-prod", variantSku: "sku-1", quantity: 1 },
+        { productId: "prod-1", variantSku: "sku-1", quantity: 2 },
+      ];
+
+      expect(reconcileCartItems(items, testCatalog)).toEqual([
+        { productId: "prod-1", variantSku: "sku-1", quantity: 2 },
+      ]);
+    });
+
+    it("discards items referencing removed variant SKUs", () => {
+      const items: CartItem[] = [
+        { productId: "prod-1", variantSku: "removed-sku", quantity: 1 },
+        { productId: "prod-3", variantSku: "sku-3", quantity: 1 },
+      ];
+
+      expect(reconcileCartItems(items, testCatalog)).toEqual([
+        { productId: "prod-3", variantSku: "sku-3", quantity: 1 },
+      ]);
+    });
+
+    it("discards items referencing variants with zero stock", () => {
+      const items: CartItem[] = [
+        { productId: "prod-1", variantSku: "sku-zero", quantity: 1 },
+        { productId: "prod-1", variantSku: "sku-1", quantity: 2 },
+      ];
+
+      expect(reconcileCartItems(items, testCatalog)).toEqual([
+        { productId: "prod-1", variantSku: "sku-1", quantity: 2 },
+      ]);
+    });
+
+    it("clamps quantities exceeding available stock to the variant stock limit", () => {
+      const items: CartItem[] = [
+        { productId: "prod-1", variantSku: "sku-1", quantity: 12 },
+        { productId: "prod-3", variantSku: "sku-3", quantity: 4 },
+      ];
+
+      expect(reconcileCartItems(items, testCatalog)).toEqual([
+        { productId: "prod-1", variantSku: "sku-1", quantity: 5 },
+        { productId: "prod-3", variantSku: "sku-3", quantity: 3 },
+      ]);
+    });
+
+    it("deduplicates repeated productId/variantSku entries capped at available stock", () => {
+      const items: CartItem[] = [
+        { productId: "prod-1", variantSku: "sku-1", quantity: 3 },
+        { productId: "prod-1", variantSku: "sku-1", quantity: 4 },
+      ];
+
+      expect(reconcileCartItems(items, testCatalog)).toEqual([
+        { productId: "prod-1", variantSku: "sku-1", quantity: 5 },
+      ]);
+    });
+
+    it("returns an empty array when catalog is empty", () => {
+      const items: CartItem[] = [
+        { productId: "prod-1", variantSku: "sku-1", quantity: 2 },
+      ];
+
+      expect(reconcileCartItems(items, [])).toEqual([]);
+    });
+
+    it("does not mutate the input cart items or product catalog", () => {
+      const inputItems: CartItem[] = [
+        { productId: "prod-1", variantSku: "sku-1", quantity: 99 },
+        { productId: "missing", variantSku: "sku-x", quantity: 1 },
+      ];
+      const originalItemsSnapshot = structuredClone(inputItems);
+      const originalCatalogSnapshot = structuredClone(testCatalog);
+
+      const result = reconcileCartItems(inputItems, testCatalog);
+
+      expect(result).toEqual([
+        { productId: "prod-1", variantSku: "sku-1", quantity: 5 },
+      ]);
+      expect(inputItems).toEqual(originalItemsSnapshot);
+      expect(testCatalog).toEqual(originalCatalogSnapshot);
+      expect(result[0]).not.toBe(inputItems[0]);
     });
   });
 
@@ -188,11 +335,11 @@ describe("cartStorage", () => {
 
   describe("loadCart", () => {
     it("returns an empty array when nothing is stored", () => {
-      const result = loadCart();
+      const result = loadCart(testCatalog);
       expect(result).toEqual([]);
     });
 
-    it("loads and parses valid stored cart items", () => {
+    it("loads and parses valid stored cart items matching the catalog", () => {
       const items: CartItem[] = [
         {
           productId: "prod-1",
@@ -200,15 +347,15 @@ describe("cartStorage", () => {
           quantity: 2,
         },
         {
-          productId: "prod-2",
-          variantSku: "sku-2",
+          productId: "prod-3",
+          variantSku: "sku-3",
           quantity: 1,
         },
       ];
 
       window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
 
-      const result = loadCart();
+      const result = loadCart(testCatalog);
       expect(result).toEqual(items);
     });
 
@@ -216,26 +363,29 @@ describe("cartStorage", () => {
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       window.localStorage.setItem(CART_STORAGE_KEY, "invalid-json{[:");
 
-      const result = loadCart();
+      const result = loadCart(testCatalog);
       expect(result).toEqual([]);
       expect(warnSpy).toHaveBeenCalled();
     });
 
-    it("handles stored non-array data gracefully", () => {
+    it("handles unexpected stored data structures gracefully", () => {
       window.localStorage.setItem(
         CART_STORAGE_KEY,
         JSON.stringify({ notAnArray: true })
       );
-      expect(loadCart()).toEqual([]);
+      expect(loadCart(testCatalog)).toEqual([]);
 
       window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(42));
-      expect(loadCart()).toEqual([]);
+      expect(loadCart(testCatalog)).toEqual([]);
 
       window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify("string"));
-      expect(loadCart()).toEqual([]);
+      expect(loadCart(testCatalog)).toEqual([]);
+
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(null));
+      expect(loadCart(testCatalog)).toEqual([]);
     });
 
-    it("filters out malformed items and preserves only valid CartItems", () => {
+    it("filters out malformed, stale, zero-stock, and invalid-quantity items while clamping over-stock quantities", () => {
       const rawStored = [
         {
           productId: "prod-1",
@@ -248,20 +398,35 @@ describe("cartStorage", () => {
         null,
         "not-an-item",
         {
-          productId: "prod-2",
-          variantSku: "sku-2",
+          productId: "missing-product",
+          variantSku: "sku-1",
+          quantity: 1,
+        },
+        {
+          productId: "prod-1",
+          variantSku: "removed-sku",
+          quantity: 1,
+        },
+        {
+          productId: "prod-1",
+          variantSku: "sku-zero",
+          quantity: 1,
+        },
+        {
+          productId: "prod-3",
+          variantSku: "sku-3",
           quantity: -5,
         },
         {
           productId: "prod-3",
           variantSku: "sku-3",
-          quantity: 1,
+          quantity: 10,
         },
       ];
 
       window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(rawStored));
 
-      const result = loadCart();
+      const result = loadCart(testCatalog);
       expect(result).toEqual([
         {
           productId: "prod-1",
@@ -271,7 +436,7 @@ describe("cartStorage", () => {
         {
           productId: "prod-3",
           variantSku: "sku-3",
-          quantity: 1,
+          quantity: 3,
         },
       ]);
     });
@@ -282,8 +447,8 @@ describe("cartStorage", () => {
         throw new Error("SecurityError: Access denied");
       });
 
-      expect(() => loadCart()).not.toThrow();
-      expect(loadCart()).toEqual([]);
+      expect(() => loadCart(testCatalog)).not.toThrow();
+      expect(loadCart(testCatalog)).toEqual([]);
       expect(warnSpy).toHaveBeenCalled();
     });
   });

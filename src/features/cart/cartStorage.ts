@@ -1,3 +1,4 @@
+import type { Product } from "../products/types";
 import type { CartItem } from "./types";
 
 /**
@@ -34,10 +35,75 @@ export function isValidCartItem(item: unknown): item is CartItem {
 }
 
 /**
- * Safely loads and parses cart items from localStorage using JSON.parse().
- * Returns an empty array if storage is empty, inaccessible, or contains malformed data.
+ * Pure reconciliation helper that treats persisted cart data as untrusted and
+ * validates/reconciles it against the current product catalog:
+ * - Discards malformed entries and invalid quantities
+ * - Discards entries referencing missing products or removed variant SKUs
+ * - Discards entries referencing variants with zero (or non-positive) stock
+ * - Clamps quantities exceeding available stock to the variant's stock limit
+ * - Deduplicates matching (productId, variantSku) lines without mutating inputs
  */
-export function loadCart(): CartItem[] {
+export function reconcileCartItems(
+  rawItems: unknown,
+  products: readonly Product[]
+): CartItem[] {
+  if (!Array.isArray(rawItems)) {
+    return [];
+  }
+
+  const reconciled: CartItem[] = [];
+  const lineIndexByKey = new Map<string, number>();
+
+  for (const entry of rawItems) {
+    if (!isValidCartItem(entry)) {
+      continue;
+    }
+
+    const product = products.find((item) => item.id === entry.productId);
+    if (!product) {
+      continue;
+    }
+
+    const variant = product.variants.find(
+      (item) => item.sku === entry.variantSku
+    );
+    if (!variant || !Number.isFinite(variant.stock) || variant.stock <= 0) {
+      continue;
+    }
+
+    const lineKey = `${entry.productId}\0${entry.variantSku}`;
+    const existingIndex = lineIndexByKey.get(lineKey);
+
+    if (existingIndex !== undefined) {
+      const existingItem = reconciled[existingIndex];
+      const mergedQuantity = Math.min(
+        existingItem.quantity + entry.quantity,
+        variant.stock
+      );
+      reconciled[existingIndex] = {
+        ...existingItem,
+        quantity: mergedQuantity,
+      };
+      continue;
+    }
+
+    lineIndexByKey.set(lineKey, reconciled.length);
+    reconciled.push({
+      productId: entry.productId,
+      variantSku: entry.variantSku,
+      quantity: Math.min(entry.quantity, variant.stock),
+    });
+  }
+
+  return reconciled;
+}
+
+/**
+ * Safely loads, parses, and reconciles cart items from localStorage against the
+ * current product catalog. Returns an empty array if storage is empty,
+ * inaccessible, or contains malformed data.
+ */
+export function loadCart(products: readonly Product[]): CartItem[] {
   try {
     if (typeof window === "undefined" || !window.localStorage) {
       return [];
@@ -49,13 +115,7 @@ export function loadCart(): CartItem[] {
     }
 
     const parsedData: unknown = JSON.parse(rawData);
-
-    if (!Array.isArray(parsedData)) {
-      return [];
-    }
-
-    // Filter and keep only validated cart items
-    return parsedData.filter(isValidCartItem);
+    return reconcileCartItems(parsedData, products);
   } catch (error) {
     console.warn("Failed to load cart from localStorage:", error);
     return [];

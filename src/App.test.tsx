@@ -392,4 +392,61 @@ describe("Cart localStorage persistence", () => {
     expect(stored).toEqual([]);
     expect(screen.getByText(/your cart is empty/i)).toBeInTheDocument();
   });
+
+  it("discards stale products, removed SKUs, and zero-stock variants and clamps over-stock quantities on hydration without throwing", () => {
+    // ARRANGE: Mix stale, zero-stock, over-stock, and valid entries
+    const inStockProduct = products[0];
+    const inStockVariant = inStockProduct.variants.find(
+      (variant) => variant.stock > 0
+    )!;
+    const zeroStockVariant = inStockProduct.variants.find(
+      (variant) => variant.stock === 0
+    )!;
+
+    const untrustedStoredCart = [
+      {
+        productId: "removed-product-999",
+        variantSku: "OLD-SKU",
+        quantity: 2,
+      },
+      {
+        productId: inStockProduct.id,
+        variantSku: "REMOVED-SKU-999",
+        quantity: 1,
+      },
+      {
+        productId: inStockProduct.id,
+        variantSku: zeroStockVariant.sku,
+        quantity: 1,
+      },
+      {
+        productId: inStockProduct.id,
+        variantSku: inStockVariant.sku,
+        quantity: inStockVariant.stock + 50,
+      },
+    ];
+
+    window.localStorage.setItem(
+      CART_STORAGE_KEY,
+      JSON.stringify(untrustedStoredCart)
+    );
+
+    // ACT: Render App (calculateCartTotals runs on initial render)
+    render(<App />);
+
+    // ASSERT: App renders cleanly with only the valid item clamped to available stock
+    const cartHeading = screen.getByRole("heading", {
+      name: new RegExp(`your cart \\(${inStockVariant.stock}\\)`, "i"),
+    });
+    expect(cartHeading).toBeInTheDocument();
+
+    const stored = JSON.parse(window.localStorage.getItem(CART_STORAGE_KEY)!);
+    expect(stored).toEqual([
+      {
+        productId: inStockProduct.id,
+        variantSku: inStockVariant.sku,
+        quantity: inStockVariant.stock,
+      },
+    ]);
+  });
 });
