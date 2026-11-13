@@ -59,6 +59,11 @@ ADRs are append-only historical records—do not rewrite an accepted ADR to desc
 
 ## Decision Log
 
+*Note: ADRs `0002`–`0004` are retrospective records documenting architectural decisions already established in the codebase prior to future redesign or feature expansion.*
+
 | ADR | Decision | Status | Date |
 |---|---|---|---|
 | [0001](./0001-first-architectural-decision.md) | Separate Pure Domain Logic and Side-Effect Boundaries from React UI Components | Accepted | 2026-11-12 |
+| [0002](./0002-client-side-spa-foundation-and-plain-css.md) | Client-Side React, TypeScript, and Vite SPA Foundation with Plain CSS3 and Local State | Accepted | 2026-11-13 |
+| [0003](./0003-versioned-localstorage-cart-persistence-and-reconciliation.md) | Versioned `localStorage` Cart Persistence with Boundary Reconciliation Against Stale Catalog Data | Accepted | 2026-11-13 |
+| [0004](./0004-strict-cart-calculations-and-integer-cents-pricing.md) | Strict Fail-Fast Cart Calculations and Integer-Cents Monetary Representation | Accepted | 2026-11-13 |
