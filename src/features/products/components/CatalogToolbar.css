@@ -1,0 +1,208 @@
+.catalog-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 20px 0 24px;
+  padding: 18px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.catalog-toolbar__top {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.catalog__search {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.catalog__search label,
+.catalog__price label,
+.catalog__sort label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-forest);
+  white-space: nowrap;
+}
+
+.catalog__search input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: var(--color-ink);
+  font: inherit;
+}
+
+.catalog-toolbar__selects {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.catalog__price,
+.catalog__sort {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.catalog__price select,
+.catalog__sort select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  background-color: #ffffff;
+  color: var(--color-forest);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.catalog__price select:hover,
+.catalog__sort select:hover,
+.catalog__search input:hover {
+  border-color: var(--color-muted-ink);
+}
+
+.catalog__search input:focus-visible,
+.catalog__price select:focus-visible,
+.catalog__sort select:focus-visible {
+  outline: 2px solid var(--color-forest);
+  outline-offset: 2px;
+}
+
+.catalog__categories {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.catalog__categories legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-forest);
+  margin-bottom: 10px;
+}
+
+.catalog__category-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.catalog__category-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: var(--color-ink);
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.catalog__category-option:hover {
+  border-color: var(--color-forest-accent);
+}
+
+.catalog__category-option--active {
+  border-color: var(--color-forest-accent);
+  background-color: var(--color-sage-tint);
+  color: var(--color-forest);
+  font-weight: 600;
+}
+
+.catalog__category-option input {
+  margin: 0;
+  accent-color: var(--color-forest);
+  cursor: pointer;
+}
+
+.catalog__category-option:has(input:focus-visible) {
+  outline: 2px solid var(--color-forest);
+  outline-offset: 2px;
+}
+
+.catalog-toolbar__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.catalog-toolbar__count {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-subtle-text);
+}
+
+.catalog-toolbar__clear {
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: var(--color-forest);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.catalog-toolbar__clear:hover {
+  background-color: var(--color-sage);
+  border-color: var(--color-forest-accent);
+}
+
+.catalog-toolbar__clear:focus-visible {
+  outline: 2px solid var(--color-forest);
+  outline-offset: 2px;
+}
+
+@media (min-width: 640px) {
+  .catalog-toolbar__selects {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .catalog-toolbar {
+    padding: 20px 24px;
+  }
+
+  .catalog-toolbar__top {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  .catalog-toolbar__selects {
+    width: 380px;
+    flex-shrink: 0;
+  }
+}

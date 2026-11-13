@@ -100,7 +100,7 @@ export const straightLegJeans: Product = {
     },
     {
       sku: "JN-KHK-32",
-      color: "khaki",
+      color: "Khaki",
       size: "32",
       stock: 5,
       imageUrl: "/images/products/jeans-khaki.jpeg",

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { describe, it, expect, afterEach, beforeEach } from "vitest";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import {
   render,
   screen,
@@ -22,6 +22,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  vi.restoreAllMocks();
 });
 
 // The results count renders as "5 products found" / "1 product found".
@@ -504,5 +505,112 @@ describe("Cart localStorage persistence", () => {
         quantity: inStockVariant.stock,
       },
     ]);
+  });
+
+  it("displays a dismissible hydration notice when stale or over-stock items are reconciled", () => {
+    const inStockProduct = products[0];
+    const inStockVariant = inStockProduct.variants.find((v) => v.stock > 0)!;
+
+    window.localStorage.setItem(
+      CART_STORAGE_KEY,
+      JSON.stringify([
+        { productId: "removed-999", variantSku: "NONE", quantity: 1 },
+        {
+          productId: inStockProduct.id,
+          variantSku: inStockVariant.sku,
+          quantity: inStockVariant.stock + 20,
+        },
+      ])
+    );
+
+    render(<App />);
+
+    expect(
+      screen.getByText(/saved cart items or quantities were updated/i)
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /dismiss cart notice/i })
+    );
+    expect(
+      screen.queryByText(/saved cart items or quantities were updated/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows explicit storage error feedback when localStorage.setItem fails", () => {
+    render(<App />);
+
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("QuotaExceededError");
+    });
+
+    const firstCard = screen.getAllByRole("article")[0];
+    fireEvent.click(
+      within(firstCard).getByRole("button", { name: /add to cart/i })
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /unable to save your cart to browser storage/i
+    );
+  });
+});
+
+describe("Stage 1 catalog enhancements", () => {
+  it("filters products by price range and clears filters from the empty state", () => {
+    render(<App />);
+
+    const priceSelect = screen.getByRole("combobox", { name: /^price$/i });
+    fireEvent.change(priceSelect, { target: { value: "over-75" } });
+
+    expect(screen.getByText("1 product found")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Everyday Jacket" })
+    ).toBeInTheDocument();
+
+    // Combine with non-matching search to trigger empty state + Clear filters
+    const searchInput = screen.getByRole("searchbox", {
+      name: /search products/i,
+    });
+    fireEvent.change(searchInput, { target: { value: "hoodie" } });
+
+    expect(screen.getByText("0 products found")).toBeInTheDocument();
+    const clearButtons = screen.getAllByRole("button", {
+      name: /clear filters/i,
+    });
+    fireEvent.click(clearButtons[clearButtons.length - 1]);
+
+    expect(
+      screen.getByText(`${products.length} products found`)
+    ).toBeInTheDocument();
+  });
+
+  it("updates Header cart link count and supports adding from ProductDetailModal", () => {
+    render(<App />);
+
+    expect(
+      screen.getByRole("link", { name: /shopping cart with 0 items/i })
+    ).toBeInTheDocument();
+
+    const firstCard = screen.getAllByRole("article")[0];
+    fireEvent.click(
+      within(firstCard).getByRole("button", { name: /view details/i })
+    );
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toBeInTheDocument();
+
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: /add to cart/i })
+    );
+
+    expect(
+      screen.getByRole("link", { name: /shopping cart with 1 item/i })
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: /close product details/i })
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

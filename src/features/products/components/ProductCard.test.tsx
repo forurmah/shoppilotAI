@@ -235,4 +235,39 @@ describe("ProductCard", () => {
       firstVariant.sku
     );
   });
+
+  // TEST 7: Dynamic image switching by color
+  it("switches displayed image dynamically when a different color is selected", () => {
+    const product = products[0];
+
+    render(
+      <ProductCard
+        product={product}
+        onAddToCart={onAddToCart}
+      />
+    );
+
+    const img = screen.getByRole("img");
+    expect(img).toHaveAttribute("src", "/images/products/hoodie-BLACK.jpeg");
+
+    fireEvent.click(screen.getByRole("button", { name: "White" }));
+    expect(img).toHaveAttribute("src", "/images/products/hoodie-WHITE.jpeg");
+  });
+
+  // TEST 8: View details callback
+  it("calls onViewDetails when View details is clicked", () => {
+    const product = products[0];
+    const onViewDetails = vi.fn();
+
+    render(
+      <ProductCard
+        product={product}
+        onAddToCart={onAddToCart}
+        onViewDetails={onViewDetails}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /view details/i }));
+    expect(onViewDetails).toHaveBeenCalledWith(product);
+  });
 });

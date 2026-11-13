@@ -104,6 +104,8 @@ ShopPilot AI uses mobile-first CSS and media queries to create a consistent shop
 | 640px–1023px | 3 |
 | 1024px and above | 4 |
 
+*(Implemented mobile-first in `CatalogGrid.css`: 2 columns by default, `@media (min-width: 640px)` for 3 columns, and `@media (min-width: 1024px)` for 4 columns.)*
+
 ### Design Decisions
 
 **CSS Grid**
@@ -155,13 +157,24 @@ The main application follows a feature-oriented folder structure:
 src/
 ├── components/
 │   ├── Header.tsx
-│   └── Header.css
+│   ├── Header.css
+│   ├── HeroSection.tsx
+│   ├── HeroSection.css
+│   ├── AboutSection.tsx
+│   └── AboutSection.css
 │
 ├── features/
 │   ├── cart/
+│   │   ├── components/
+│   │   │   ├── CartSection.tsx
+│   │   │   ├── CartSection.css
+│   │   │   ├── CartItemRow.tsx
+│   │   │   └── OrderSummary.tsx
 │   │   ├── types.ts
 │   │   ├── cartStorage.ts
 │   │   ├── cartStorage.test.ts
+│   │   ├── cartHydration.ts
+│   │   ├── cartHydration.test.ts
 │   │   ├── addToCart.ts
 │   │   ├── addToCart.test.ts
 │   │   ├── updateCartQuantity.ts
@@ -173,10 +186,22 @@ src/
 │   │
 │   └── products/
 │       ├── components/
+│       │   ├── CatalogToolbar.tsx
+│       │   ├── CatalogToolbar.css
+│       │   ├── CatalogGrid.tsx
+│       │   ├── CatalogGrid.css
 │       │   ├── ProductCard.tsx
 │       │   ├── ProductCard.css
-│       │   └── ProductCard.test.tsx
+│       │   ├── ProductCard.test.tsx
+│       │   ├── ProductDetailModal.tsx
+│       │   └── ProductDetailModal.css
 │       │
+│       ├── catalogOperations.ts
+│       ├── catalogOperations.test.ts
+│       ├── priceFilter.ts
+│       ├── priceFilter.test.ts
+│       ├── checkAvailability.ts
+│       ├── checkAvailability.test.ts
 │       ├── types.ts
 │       ├── data.ts
 │       └── data.test.ts

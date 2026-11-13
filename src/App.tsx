@@ -1,34 +1,50 @@
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Header from "./components/Header";
-import { ProductCard } from "./features/products/components/ProductCard";
+import { HeroSection } from "./components/HeroSection";
+import { AboutSection } from "./components/AboutSection";
 import { products } from "./features/products/data";
-import type { CartItem } from "./features/cart/types";
-import { addToCart } from "./features/cart/addToCart";
 import { checkAvailability } from "./features/products/checkAvailability";
-import { updateCartQuantity } from "./features/cart/updateCartQuantity";
-import { removeFromCart } from "./features/cart/removefromcart";
-import { calculateCartTotals } from "./features/cart/calculateCartTotals";
-import { loadCart, saveCart } from "./features/cart/cartStorage";
 import {
   filterProductsByCategory,
   searchProducts,
   sortProducts,
   type SortOption,
 } from "./features/products/catalogOperations";
+import {
+  filterProductsByPrice,
+  type PriceRangeFilter,
+} from "./features/products/priceFilter";
+import type { Product } from "./features/products/types";
+import { CatalogToolbar } from "./features/products/components/CatalogToolbar";
+import { CatalogGrid } from "./features/products/components/CatalogGrid";
+import { ProductDetailModal } from "./features/products/components/ProductDetailModal";
+import type { CartItem } from "./features/cart/types";
+import { addToCart } from "./features/cart/addToCart";
+import { updateCartQuantity } from "./features/cart/updateCartQuantity";
+import { removeFromCart } from "./features/cart/removefromcart";
+import { calculateCartTotals } from "./features/cart/calculateCartTotals";
+import { saveCart } from "./features/cart/cartStorage";
+import {
+  hydrateCartWithReport,
+  verifyCartSaved,
+} from "./features/cart/cartHydration";
+import { CartSection } from "./features/cart/components/CartSection";
 
 function App() {
-  // State
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] =
-    useState("all");
-  const [sortOption, setSortOption] =
-    useState<SortOption>("default");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [priceRange, setPriceRange] = useState<PriceRangeFilter>("all");
+  const [sortOption, setSortOption] = useState<SortOption>("default");
+  const [selectedProductForDetails, setSelectedProductForDetails] =
+    useState<Product | null>(null);
 
-  // Shopping cart state with lazy localStorage initialization
-  const [cartItems, setCartItems] = useState<CartItem[]>(() =>
-    loadCart(products)
+  // Shopping cart state with lazy localStorage initialization + reconciliation notice
+  const [initialHydration] = useState(() => hydrateCartWithReport(products));
+  const [cartItems, setCartItems] = useState<CartItem[]>(initialHydration.items);
+  const [hydrationNotice, setHydrationNotice] = useState<string | null>(
+    initialHydration.notice
   );
+  const [storageError, setStorageError] = useState<string | null>(null);
   const [cartMessage, setCartMessage] = useState("");
 
   // Persist cart changes to localStorage
@@ -36,33 +52,35 @@ function App() {
     saveCart(cartItems);
   }, [cartItems]);
 
-  // Derived cart count: total units, not cart lines
+  const checkStoragePersistence = (nextItems: CartItem[]) => {
+    saveCart(nextItems);
+    if (!verifyCartSaved(nextItems)) {
+      setStorageError(
+        "Unable to save your cart to browser storage. Changes apply to this session only."
+      );
+    } else if (storageError !== null) {
+      setStorageError(null);
+    }
+  };
+
+  // Derived cart totals via strict pure calculation helper
   const cartCount = cartItems.reduce(
     (total, item) => total + item.quantity,
     0
   );
-
   const cartTotals = calculateCartTotals(cartItems, products);
   const subtotalCents = cartTotals.subtotalCents;
 
-
   // Add a selected product variant to the cart
-  const handleAddToCart = (
-    productId: string,
-    variantSku: string
-  ) => {
-    const product = products.find(
-      (item) => item.id === productId
-    );
+  const handleAddToCart = (productId: string, variantSku: string) => {
+    const product = products.find((item) => item.id === productId);
 
     if (!product) {
       setCartMessage("Product not found.");
       return;
     }
 
-    const variant = product.variants.find(
-      (item) => item.sku === variantSku
-    );
+    const variant = product.variants.find((item) => item.sku === variantSku);
 
     if (!variant) {
       setCartMessage("Selected variant is unavailable.");
@@ -86,8 +104,7 @@ function App() {
 
     const existingItem = cartItems.find(
       (item) =>
-        item.productId === productId &&
-        item.variantSku === variantSku
+        item.productId === productId && item.variantSku === variantSku
     );
 
     const currentQuantity = existingItem?.quantity ?? 0;
@@ -99,332 +116,142 @@ function App() {
       return;
     }
 
-    setCartItems((currentItems) =>
-      addToCart(currentItems, productId, variantSku)
-    );
-
+    const nextItems = addToCart(cartItems, productId, variantSku);
+    setCartItems(nextItems);
+    checkStoragePersistence(nextItems);
     setCartMessage(`${product.name} added to cart.`);
   };
-  const handleRemoveFromCart=(productId:string, variantSku:string)=>{
-    setCartItems((currentItems)=> removeFromCart(currentItems,productId,variantSku));
-  }
+
+  const handleRemoveFromCart = (productId: string, variantSku: string) => {
+    const nextItems = removeFromCart(cartItems, productId, variantSku);
+    setCartItems(nextItems);
+    checkStoragePersistence(nextItems);
+  };
 
   // Handle increasing or decreasing cart quantity
-  const handleQuantityChange =  (
+  const handleQuantityChange = (
     productId: string,
     variantSku: string,
     change: 1 | -1
-  ) =>{
-    const product = products.find(
-      (item) => item.id === productId
-    );
+  ) => {
+    const product = products.find((item) => item.id === productId);
 
     if (!product) {
       setCartMessage("Product not found.");
       return;
     }
 
-    const variant = product.variants.find(
-      (item) => item.sku === variantSku
-    );
+    const variant = product.variants.find((item) => item.sku === variantSku);
 
     if (!variant) {
       setCartMessage("Selected variant is unavailable.");
       return;
     }
 
-    setCartItems((currentItems) =>
-      updateCartQuantity(
-        currentItems,
-        productId,
-        variantSku,
-        change,
-        variant.stock
-      )
+    const nextItems = updateCartQuantity(
+      cartItems,
+      productId,
+      variantSku,
+      change,
+      variant.stock
     );
+    setCartItems(nextItems);
+    checkStoragePersistence(nextItems);
   };
 
-  // Get unique categories
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setPriceRange("all");
+    setSortOption("default");
+  };
+
+  // Unique categories
   const categories = [
     ...new Set(products.map((product) => product.category)),
   ];
 
   // Derive filtered and sorted catalog products
   const searchedProducts = searchProducts(products, searchQuery);
-  const filteredProducts = filterProductsByCategory(
+  const categoryFilteredProducts = filterProductsByCategory(
     searchedProducts,
     selectedCategory
   );
-  const sortedProducts = sortProducts(filteredProducts, sortOption);
+  const priceFilteredProducts = filterProductsByPrice(
+    categoryFilteredProducts,
+    priceRange
+  );
+  const sortedProducts = sortProducts(priceFilteredProducts, sortOption);
+
+  const hasActiveFilters =
+    searchQuery.trim() !== "" ||
+    selectedCategory !== "all" ||
+    priceRange !== "all" ||
+    sortOption !== "default";
 
   return (
     <>
-      <Header />
+      <Header cartCount={cartCount} />
 
       <main id="home">
-        <section className="hero">
-          <p className="hero-label">
-            WELCOME TO SHOPPILOT AI
-          </p>
+        <HeroSection />
 
-          <h1>Find your next favorite outfit.</h1>
-
-          <p className="hero-description">
-            Discover stylish clothing, explore colors
-            and sizes, and shop with confidence.
-          </p>
-
-          <a href="#products" className="hero-button">
-            Explore Products
-          </a>
-        </section>
-
-        {/* PRODUCT CATALOG */}
         <section id="products" className="catalog">
           <h2>Our Products</h2>
 
           {cartMessage && (
-            <p role="status">{cartMessage}</p>
-          )}
-          {cartCount > 0 && (
-            <a href="#cart">View cart ({cartCount})</a>
-          )}
-
-
-          {/* Search */}
-          <div className="catalog__search">
-            <label htmlFor="product-search">
-              Search products:
-            </label>
-
-            <input
-              id="product-search"
-              type="search"
-              placeholder="Search by name or category..."
-              value={searchQuery}
-              onChange={(event) =>
-                setSearchQuery(event.target.value)
-              }
-            />
-          </div>
-
-          {/* Category filtering */}
-          <fieldset className="catalog__categories">
-            <legend>Filter by category</legend>
-
-            <div className="catalog__category-options">
-              <label>
-                <input
-                  type="radio"
-                  name="category"
-                  value="all"
-                  checked={selectedCategory === "all"}
-                  onChange={() => setSelectedCategory("all")}
-                />
-                All
-              </label>
-
-              {categories.map((category) => (
-                <label key={category}>
-                  <input
-                    type="radio"
-                    name="category"
-                    value={category}
-                    checked={selectedCategory === category}
-                    onChange={() =>
-                      setSelectedCategory(category)
-                    }
-                  />
-                  {category}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
-          {/* Product sorting */}
-          <div className="catalog__sort">
-            <label htmlFor="product-sort">
-              Sort by
-            </label>
-
-            <select
-              id="product-sort"
-              value={sortOption}
-              onChange={(event) => {
-                setSortOption(
-                  event.target.value as SortOption
-                );
-              }}
-            >
-              <option value="default">Default order</option>
-              <option value="price-low">
-                Price: Low to High
-              </option>
-              <option value="price-high">
-                Price: High to Low
-              </option>
-              <option value="name-az">
-                Name: A to Z
-              </option>
-            </select>
-          </div>
-
-          {/* Product count */}
-          <p>
-            {filteredProducts.length}{" "}
-            {filteredProducts.length === 1
-              ? "product"
-              : "products"}{" "}
-            found
-          </p>
-
-          {/* Product grid */}
-          {products.length === 0 ? (
-            <p>No products available yet.</p>
-          ) : filteredProducts.length === 0 ? (
-            <p className="catalog__empty">
-              No products match your search.
-              Try a different search or category.
+            <p className="catalog__status" role="status">
+              {cartMessage}
             </p>
-          ) : (
-            <div className="product-grid">
-              {sortedProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={handleAddToCart}
-                />
-              ))}
-            </div>
           )}
+
+          <CatalogToolbar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            priceRange={priceRange}
+            onPriceRangeChange={setPriceRange}
+            sortOption={sortOption}
+            onSortChange={setSortOption}
+            filteredCount={priceFilteredProducts.length}
+            hasActiveFilters={hasActiveFilters}
+            onClearFilters={handleClearFilters}
+          />
+
+          <CatalogGrid
+            products={sortedProducts}
+            totalProductsCount={products.length}
+            onAddToCart={handleAddToCart}
+            onViewDetails={setSelectedProductForDetails}
+            onClearFilters={handleClearFilters}
+          />
         </section>
 
-        <section id="cart" className="cart-section">
-            <h2>Your Cart ({cartCount})</h2>
+        <CartSection
+          cartItems={cartItems}
+          products={products}
+          cartCount={cartCount}
+          subtotalCents={subtotalCents}
+          hydrationNotice={hydrationNotice}
+          onDismissHydrationNotice={() => setHydrationNotice(null)}
+          storageError={storageError}
+          onDismissStorageError={() => setStorageError(null)}
+          onQuantityChange={handleQuantityChange}
+          onRemoveFromCart={handleRemoveFromCart}
+        />
 
-            {cartItems.length === 0 ? (
-              <p>Your cart is empty.</p>
-            ) : (
-              <>
-                <div className="cart-items">
-                  {cartItems.map((item) => {
-                    // Find the product
-                    const product = products.find(
-                      (product) => product.id === item.productId
-                    );
-
-                    // Find the selected variant
-                    const variant = product?.variants.find(
-                      (variant) => variant.sku === item.variantSku
-                    );
-
-                    return (
-                      <div
-                        className="cart-item"
-                        key={`${item.productId}-${item.variantSku}`}
-                      >
-                        <div className="cart-item__info">
-                          <h3>{product?.name ?? "Unknown product"}</h3>
-
-                          <p>
-                            {variant
-                              ? `${variant.color} / ${variant.size}`
-                              : item.variantSku}
-                          </p>
-
-                          <p>
-                            Stock: {variant?.stock ?? "Unavailable"}
-                          </p>
-                        </div>
-
-                        <div className="cart-item__controls">
-                          <button
-                            type="button"
-                            aria-label={`Decrease quantity of ${item.variantSku}`}
-                            onClick={() =>
-                              handleQuantityChange(
-                                item.productId,
-                                item.variantSku,
-                                -1
-                              )
-                            }
-                            disabled={item.quantity <= 1 || !variant}
-                          >
-                            −
-                          </button>
-
-                          <span>{item.quantity}</span>
-
-                          <button
-                            type="button"
-                            aria-label={`Increase quantity of ${item.variantSku}`}
-                            onClick={() =>
-                              handleQuantityChange(
-                                item.productId,
-                                item.variantSku,
-                                1
-                              )
-                            }
-                            disabled={
-                              !variant || item.quantity >= variant.stock
-                            }
-                          >
-                            +
-                          </button>
-
-                          <button
-                            type="button"
-                            className="cart-item__remove"
-                            aria-label={`Remove ${item.variantSku} from cart`}
-                            onClick={() =>
-                              handleRemoveFromCart(
-                                item.productId,
-                                item.variantSku
-                              )
-                            }
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* CART SUMMARY */}
-                <div className="cart-summary">
-                  <h3>Order Summary</h3>
-
-                  <p className="cart-summary__row">
-                    <span>Subtotal</span>
-
-                    <strong>
-                      {new Intl.NumberFormat("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                      }).format(subtotalCents / 100)}
-                    </strong>
-                  </p>
-
-                  <p className="cart-summary__note">
-                    Shipping and taxes calculated at checkout.
-                  </p>
-                </div>
-              </>
-            )}
-        </section>
-
-          
-
-
-        {/* ABOUT */}
-        <section id="about">
-          <h2>About Our Shop</h2>
-        </section>
+        <AboutSection />
       </main>
+
+      <ProductDetailModal
+        product={selectedProductForDetails}
+        onClose={() => setSelectedProductForDetails(null)}
+        onAddToCart={handleAddToCart}
+      />
     </>
   );
 }
 
 export default App;
-
