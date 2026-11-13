@@ -10,12 +10,12 @@ import { updateCartQuantity } from "./features/cart/updateCartQuantity";
 import { removeFromCart } from "./features/cart/removefromcart";
 import { calculateCartTotals } from "./features/cart/calculateCartTotals";
 import { loadCart, saveCart } from "./features/cart/cartStorage";
-
-type SortOption =
-  | "default"
-  | "price-low"
-  | "price-high"
-  | "name-az";
+import {
+  filterProductsByCategory,
+  searchProducts,
+  sortProducts,
+  type SortOption,
+} from "./features/products/catalogOperations";
 
 function App() {
   // State
@@ -149,45 +149,13 @@ function App() {
     ...new Set(products.map((product) => product.category)),
   ];
 
-  // Normalize search query
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-
-  // Filter products
-  const filteredProducts = products.filter((product) => {
-    const matchesName = product.name
-      .toLowerCase()
-      .includes(normalizedQuery);
-
-    const matchesCategory = product.category
-      .toLowerCase()
-      .includes(normalizedQuery);
-
-    const matchesSelectedCategory =
-      selectedCategory === "all" ||
-      product.category === selectedCategory;
-
-    return (
-      (matchesName || matchesCategory) &&
-      matchesSelectedCategory
-    );
-  });
-
-  // Sort filtered products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortOption) {
-      case "price-low":
-        return a.priceCents - b.priceCents;
-
-      case "price-high":
-        return b.priceCents - a.priceCents;
-
-      case "name-az":
-        return a.name.localeCompare(b.name);
-
-      default:
-        return 0;
-    }
-  });
+  // Derive filtered and sorted catalog products
+  const searchedProducts = searchProducts(products, searchQuery);
+  const filteredProducts = filterProductsByCategory(
+    searchedProducts,
+    selectedCategory
+  );
+  const sortedProducts = sortProducts(filteredProducts, sortOption);
 
   return (
     <>

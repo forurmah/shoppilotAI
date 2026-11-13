@@ -278,6 +278,62 @@ describe("Product catalog", () => {
 
     expect(actualNames).toEqual(expectedNames);
   });
+
+  // TEST 10: Search + sorting together
+  it("combines search and sorting together", () => {
+    render(<App />);
+
+    const searchInput = screen.getByRole("searchbox", {
+      name: /search products/i,
+    });
+    const sortSelect = screen.getByRole("combobox", { name: /sort by/i });
+
+    fireEvent.change(searchInput, { target: { value: "shirt" } });
+    fireEvent.change(sortSelect, { target: { value: "price-high" } });
+
+    const actualNames = screen
+      .getAllByRole("article")
+      .map((card) => within(card).getByRole("heading").textContent);
+
+    expect(actualNames).toEqual([
+      "Relaxed Sweatshirt",
+      "Classic Cotton T-Shirt",
+    ]);
+    expect(getResultsCount()).toHaveTextContent("2 products found");
+  });
+
+  // TEST 11: Search + category + sorting all together
+  it("combines search, category filtering, and sorting together", () => {
+    render(<App />);
+
+    const searchInput = screen.getByRole("searchbox", {
+      name: /search products/i,
+    });
+    const sortSelect = screen.getByRole("combobox", { name: /sort by/i });
+
+    fireEvent.change(searchInput, { target: { value: "shirt" } });
+    fireEvent.change(sortSelect, { target: { value: "price-low" } });
+    fireEvent.click(screen.getByRole("radio", { name: "Sweatshirts" }));
+
+    const filteredNames = screen
+      .getAllByRole("article")
+      .map((card) => within(card).getByRole("heading").textContent);
+
+    expect(filteredNames).toEqual(["Relaxed Sweatshirt"]);
+    expect(getResultsCount()).toHaveTextContent("1 product found");
+
+    // Resetting category to All preserves search and sort
+    fireEvent.click(screen.getByRole("radio", { name: "All" }));
+
+    const restoredNames = screen
+      .getAllByRole("article")
+      .map((card) => within(card).getByRole("heading").textContent);
+
+    expect(restoredNames).toEqual([
+      "Classic Cotton T-Shirt",
+      "Relaxed Sweatshirt",
+    ]);
+  });
 });
 
 describe("Cart localStorage persistence", () => {
