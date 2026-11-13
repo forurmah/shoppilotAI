@@ -270,4 +270,44 @@ describe("ProductCard", () => {
     fireEvent.click(screen.getByRole("button", { name: /view details/i }));
     expect(onViewDetails).toHaveBeenCalledWith(product);
   });
+
+  // TEST 9: Seller profile callback and verified badge
+  it("displays seller store name and calls onViewSeller when clicked", () => {
+    const product = products[0];
+    const onViewSeller = vi.fn();
+
+    render(
+      <ProductCard
+        product={product}
+        onAddToCart={onAddToCart}
+        onViewSeller={onViewSeller}
+      />
+    );
+
+    const sellerButton = screen.getByRole("button", {
+      name: /view seller profile for atelier north/i,
+    });
+    expect(sellerButton).toBeInTheDocument();
+    expect(screen.getByText("Verified")).toBeInTheDocument();
+
+    fireEvent.click(sellerButton);
+    expect(onViewSeller).toHaveBeenCalledWith("atelier-north");
+  });
+
+  // TEST 10: Missing seller fallback
+  it("displays a graceful fallback when seller information is missing", () => {
+    const product = products[0];
+
+    render(
+      <ProductCard
+        product={product}
+        seller={null}
+        onAddToCart={onAddToCart}
+      />
+    );
+
+    expect(
+      screen.getByText(/seller information unavailable/i)
+    ).toBeInTheDocument();
+  });
 });

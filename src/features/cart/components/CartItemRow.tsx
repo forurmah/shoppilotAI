@@ -1,9 +1,11 @@
+import { formatCurrency } from "../../../lib/formatCurrency";
 import type { Product } from "../../products/types";
 import type { CartItem } from "../types";
 
 type CartItemRowProps = {
   item: CartItem;
   product: Product | undefined;
+  sellerStoreName?: string;
   onQuantityChange: (
     productId: string,
     variantSku: string,
@@ -15,6 +17,7 @@ type CartItemRowProps = {
 export function CartItemRow({
   item,
   product,
+  sellerStoreName,
   onQuantityChange,
   onRemove,
 }: CartItemRowProps) {
@@ -24,10 +27,7 @@ export function CartItemRow({
 
   const lineTotalCents = product ? product.priceCents * item.quantity : 0;
   const formattedLineTotal = product
-    ? new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: product.currency,
-      }).format(lineTotalCents / 100)
+    ? formatCurrency(lineTotalCents, product.currency)
     : null;
 
   return (
@@ -35,7 +35,10 @@ export function CartItemRow({
       <div className="cart-item__info">
         <h3>{product?.name ?? "Unknown product"}</h3>
 
-        <p>{variant ? `${variant.color} / ${variant.size}` : item.variantSku}</p>
+        <p>
+          {variant ? `${variant.color} / ${variant.size}` : item.variantSku}
+          {sellerStoreName ? ` · Sold by ${sellerStoreName}` : ""}
+        </p>
 
         <p className="tabular-nums">
           Stock: {variant?.stock ?? "Unavailable"}

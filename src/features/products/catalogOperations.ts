@@ -1,3 +1,4 @@
+import type { Seller } from "../sellers/types";
 import type { Product } from "./types";
 
 export type SortOption =
@@ -8,18 +9,23 @@ export type SortOption =
 
 /**
  * Filters products by checking whether the trimmed, case-insensitive query
- * appears in the product's name or category. Returns a new array without
- * mutating the input collection.
+ * appears in the product's name, category, or (when sellers are supplied) the
+ * assigned seller's storeName. Returns a new array without mutating inputs.
  */
 export function searchProducts(
   products: readonly Product[],
-  query: string
+  query: string,
+  sellers: readonly Seller[] = []
 ): Product[] {
   const normalizedQuery = query.trim().toLowerCase();
 
   if (normalizedQuery === "") {
     return [...products];
   }
+
+  const sellerNamesById = new Map(
+    sellers.map((seller) => [seller.id, seller.storeName.toLowerCase()])
+  );
 
   return products.filter((product) => {
     const matchesName = product.name
@@ -28,8 +34,12 @@ export function searchProducts(
     const matchesCategory = product.category
       .toLowerCase()
       .includes(normalizedQuery);
+    const storeName = product.sellerId
+      ? sellerNamesById.get(product.sellerId)
+      : undefined;
+    const matchesStore = storeName ? storeName.includes(normalizedQuery) : false;
 
-    return matchesName || matchesCategory;
+    return matchesName || matchesCategory || matchesStore;
   });
 }
 

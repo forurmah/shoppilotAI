@@ -613,4 +613,110 @@ describe("Stage 1 catalog enhancements", () => {
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
+
+  it("opens SellerProfileModal from a product card and navigates from its catalog preview into ProductDetailModal", () => {
+    render(<App />);
+
+    const firstCard = screen.getAllByRole("article")[0];
+    fireEvent.click(
+      within(firstCard).getByRole("button", {
+        name: /view seller profile for atelier north/i,
+      })
+    );
+
+    const sellerDialog = screen.getByRole("dialog");
+    expect(
+      within(sellerDialog).getByRole("heading", { name: "Atelier North" })
+    ).toBeInTheDocument();
+    expect(within(sellerDialog).getByText(/Maya Lin/i)).toBeInTheDocument();
+
+    fireEvent.click(
+      within(sellerDialog).getAllByRole("button", { name: /view product/i })[0]
+    );
+
+    const productDialog = screen.getByRole("dialog");
+    expect(
+      within(productDialog).getByRole("heading", {
+        name: "Essential Oversized One",
+      })
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      within(productDialog).getByRole("button", {
+        name: /view seller profile/i,
+      })
+    );
+
+    expect(
+      within(screen.getByRole("dialog")).getByRole("heading", {
+        name: "Atelier North",
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("opens Seller Workspace preview modal from header and synchronizes hero search", () => {
+    render(<App />);
+
+    const banner = screen.getByRole("banner");
+    fireEvent.click(
+      within(banner).getByRole("button", { name: /seller workspace/i })
+    );
+    const workspaceDialog = screen.getByRole("dialog");
+    expect(
+      within(workspaceDialog).getByRole("heading", {
+        name: /seller workspace is planned for the next stage/i,
+      })
+    ).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    const heroSearch = screen.getByRole("searchbox", {
+      name: /find items or categories/i,
+    });
+    fireEvent.change(heroSearch, { target: { value: "Jacket" } });
+    expect(screen.getByText("1 product found")).toBeInTheDocument();
+  });
+
+  it("filters products by seller store name from marketplace search", () => {
+    render(<App />);
+
+    const searchInput = screen.getByRole("searchbox", {
+      name: /search products/i,
+    });
+
+    fireEvent.change(searchInput, { target: { value: "Atelier North" } });
+    expect(getResultsCount()).toHaveTextContent("2 products found");
+    expect(
+      screen.getByRole("heading", { name: "Essential Oversized One" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Classic Cotton T-Shirt" })
+    ).toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: "loom" } });
+    expect(getResultsCount()).toHaveTextContent("2 products found");
+    expect(
+      screen.getByRole("heading", { name: "Straight-Leg Jeans" })
+    ).toBeInTheDocument();
+  });
+
+  it("renders single-page footer links and workspace entry point", () => {
+    render(<App />);
+
+    const footer = screen.getByRole("contentinfo");
+    expect(within(footer).getByRole("link", { name: "Products" })).toHaveAttribute(
+      "href",
+      "#products"
+    );
+    expect(within(footer).getByRole("link", { name: "Cart" })).toHaveAttribute(
+      "href",
+      "#cart"
+    );
+
+    fireEvent.click(
+      within(footer).getByRole("button", { name: /seller workspace/i })
+    );
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
 });

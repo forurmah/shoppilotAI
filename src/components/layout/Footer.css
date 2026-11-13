@@ -1,0 +1,82 @@
+.site-footer {
+  background-color: var(--color-forest-strong);
+  color: var(--color-canvas);
+  border-top: 2px solid var(--color-gold);
+  padding: 36px 20px;
+}
+
+.site-footer__inner {
+  max-width: 1200px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.site-footer__logo {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  color: #fffdf9;
+  text-decoration: none;
+}
+
+.site-footer__summary {
+  margin: 8px 0 0;
+  max-width: 54ch;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #d5ded3;
+}
+
+.site-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+}
+
+.site-footer__nav a,
+.site-footer__workspace-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #f8f4ec;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.site-footer__nav a:hover,
+.site-footer__workspace-btn:hover {
+  color: var(--color-gold-surface);
+  text-decoration: underline;
+  text-decoration-color: var(--color-gold);
+  text-underline-offset: 6px;
+}
+
+.site-footer__logo:focus-visible,
+.site-footer__nav a:focus-visible,
+.site-footer__workspace-btn:focus-visible {
+  outline: 2px solid var(--color-gold-surface);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (min-width: 768px) {
+  .site-footer {
+    padding: 40px 24px;
+  }
+
+  .site-footer__inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+}

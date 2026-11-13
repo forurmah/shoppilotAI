@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import type { Seller } from "../sellers/types";
 import {
   filterProductsByCategory,
   searchProducts,
@@ -6,9 +7,35 @@ import {
 } from "./catalogOperations";
 import type { Product } from "./types";
 
+const sampleSellers: Seller[] = [
+  {
+    id: "atelier-north",
+    sellerName: "Maya Lin",
+    storeName: "Atelier North",
+    location: "Portland, OR",
+    description: "Organic cotton basics.",
+    isVerified: true,
+    responseTime: "Replies in under 2 hours",
+    deliveryInfo: "Ships in 1–2 business days",
+    categories: ["Hoodies", "T-Shirts"],
+  },
+  {
+    id: "pinewood-outpost",
+    sellerName: "Elena Vance",
+    storeName: "Pinewood Outpost",
+    location: "Seattle, WA",
+    description: "Weather-ready outerwear.",
+    isVerified: false,
+    responseTime: "Replies within 24 hours",
+    deliveryInfo: "Ships in 2–4 business days",
+    categories: ["Jackets"],
+  },
+];
+
 const sampleProducts: Product[] = [
   {
     id: "prod-hoodie",
+    sellerId: "atelier-north",
     name: "Essential Oversized Hoodie",
     description: "Heavyweight fleece pullover",
     category: "Hoodies",
@@ -21,6 +48,7 @@ const sampleProducts: Product[] = [
   },
   {
     id: "prod-tshirt",
+    sellerId: "atelier-north",
     name: "Classic Cotton Tee",
     description: "Breathable everyday shirt",
     category: "T-Shirts",
@@ -33,6 +61,7 @@ const sampleProducts: Product[] = [
   },
   {
     id: "prod-jacket",
+    sellerId: "pinewood-outpost",
     name: "Alpine Shell Jacket",
     description: "Lightweight outer layer",
     category: "Jackets",
@@ -67,6 +96,25 @@ describe("catalogOperations", () => {
     it("matches products by category", () => {
       const result = searchProducts(sampleProducts, "T-Shirts");
       expect(result.map((p) => p.id)).toEqual(["prod-tshirt"]);
+    });
+
+    it("matches products by seller storeName when sellers are provided", () => {
+      const atelierResult = searchProducts(
+        sampleProducts,
+        "atelier north",
+        sampleSellers
+      );
+      expect(atelierResult.map((p) => p.id)).toEqual([
+        "prod-hoodie",
+        "prod-tshirt",
+      ]);
+
+      const pinewoodResult = searchProducts(
+        sampleProducts,
+        "PINEWOOD",
+        sampleSellers
+      );
+      expect(pinewoodResult.map((p) => p.id)).toEqual(["prod-jacket"]);
     });
 
     it("does not match non-searchable fields such as description", () => {

@@ -1,24 +1,39 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 
 :root {
-  --font-body: "Inter", sans-serif;
+  --font-body: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-heading: "Playfair Display", Georgia, serif;
 
-  --color-canvas: #fafaf8;
-  --color-surface: #f7f8f5;
-  --color-sage: #f0f3ed;
-  --color-sage-tint: #eaf2ed;
-  --color-forest: #193b31;
-  --color-forest-accent: #285f49;
-  --color-forest-strong: #1e4937;
-  --color-burgundy: #983d49;
-  --color-burgundy-hover: #69232d;
-  --color-burgundy-muted: #6b3435;
-  --color-ink: #111827;
-  --color-muted-ink: #596c60;
-  --color-subtle-text: #4b5563;
-  --color-border: #e5e7eb;
-  --color-border-strong: #d1d5db;
+  /* Warm cream & forest green marketplace palette */
+  --color-canvas: #f8f4ec;
+  --color-card: #fffdf9;
+  --color-surface: #f2ede2;
+  --color-sage: #ebf0e8;
+  --color-sage-tint: #e1ebe0;
+
+  --color-forest: #17362b;
+  --color-forest-accent: #245441;
+  --color-forest-strong: #132c22;
+
+  --color-burgundy: #7f2433;
+  --color-burgundy-hover: #621925;
+  --color-burgundy-muted: #702d38;
+
+  --color-gold: #b58938;
+  --color-gold-dark: #7a5819;
+  --color-gold-surface: #f8f0dc;
+  --color-gold-border: #d9bf83;
+
+  --color-ink: #1a2c24;
+  --color-muted-ink: #485b51;
+  --color-subtle-text: #56675e;
+
+  --color-border: #d5ded3;
+  --color-border-strong: #b7c6b4;
+
+  --shadow-soft: 0 2px 10px rgba(23, 54, 43, 0.05);
+  --shadow-card-hover: 0 10px 24px rgba(23, 54, 43, 0.09);
+  --shadow-modal: 0 24px 48px rgba(19, 44, 34, 0.22);
 }
 
 *,
@@ -55,10 +70,18 @@ select {
   width: 100%;
   max-width: 1200px;
   margin-inline: auto;
-  padding: 32px 16px 48px;
+  padding: 28px 16px 48px;
 }
 
-.catalog > h2 {
+.catalog__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.catalog__header h2 {
   margin: 0;
   font-family: var(--font-heading);
   font-size: clamp(1.5rem, 2.5vw, 2rem);
@@ -66,20 +89,19 @@ select {
   color: var(--color-forest);
 }
 
-.catalog__status {
-  margin: 14px 0 0;
-  padding: 10px 14px;
-  border: 1px solid #d1d9d0;
-  border-radius: 8px;
-  background-color: var(--color-sage);
-  color: var(--color-forest);
+.catalog__subcopy {
+  margin: 0;
   font-size: 14px;
-  font-weight: 500;
+  color: var(--color-subtle-text);
+}
+
+.catalog__status {
+  margin-top: 14px;
 }
 
 @media (min-width: 768px) {
   .catalog {
-    padding: 36px 24px 56px;
+    padding: 32px 24px 56px;
   }
 }
 

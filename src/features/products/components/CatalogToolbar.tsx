@@ -44,7 +44,7 @@ export function CatalogToolbar({
           <input
             id="product-search"
             type="search"
-            placeholder="Search by name or category..."
+            placeholder="Product, category, or store..."
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
           />

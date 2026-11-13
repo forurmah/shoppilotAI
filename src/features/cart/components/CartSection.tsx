@@ -1,3 +1,7 @@
+import { EmptyState } from "../../../components/ui/EmptyState";
+import { StatusMessage } from "../../../components/ui/StatusMessage";
+import type { Seller } from "../../sellers/types";
+import { getSellerById } from "../../sellers/sellerLookup";
 import type { Product } from "../../products/types";
 import type { CartItem } from "../types";
 import { CartItemRow } from "./CartItemRow";
@@ -7,12 +11,14 @@ import "./CartSection.css";
 type CartSectionProps = {
   cartItems: CartItem[];
   products: Product[];
+  sellers: readonly Seller[];
   cartCount: number;
   subtotalCents: number;
   hydrationNotice: string | null;
   onDismissHydrationNotice: () => void;
   storageError: string | null;
   onDismissStorageError: () => void;
+  cartActionFeedback?: string;
   onQuantityChange: (
     productId: string,
     variantSku: string,
@@ -24,51 +30,69 @@ type CartSectionProps = {
 export function CartSection({
   cartItems,
   products,
+  sellers,
   cartCount,
   subtotalCents,
   hydrationNotice,
   onDismissHydrationNotice,
   storageError,
   onDismissStorageError,
+  cartActionFeedback,
   onQuantityChange,
   onRemoveFromCart,
 }: CartSectionProps) {
   return (
     <section id="cart" className="cart-section">
-      <h2>
-        Your Cart (<span className="tabular-nums">{cartCount}</span>)
-      </h2>
+      <div className="cart-section__header">
+        <h2>
+          Your Cart (<span className="tabular-nums">{cartCount}</span>)
+        </h2>
+        <p className="cart-section__sub">
+          Saved automatically to this browser · Stock checked against active
+          listings
+        </p>
+      </div>
 
       {hydrationNotice && (
-        <div className="cart-notice" role="status">
-          <p>{hydrationNotice}</p>
-          <button
-            type="button"
-            className="cart-notice__dismiss"
-            aria-label="Dismiss cart notice"
-            onClick={onDismissHydrationNotice}
-          >
-            Dismiss
-          </button>
-        </div>
+        <StatusMessage
+          variant="info"
+          className="cart-section__status"
+          onDismiss={onDismissHydrationNotice}
+          dismissLabel="Dismiss cart notice"
+        >
+          {hydrationNotice}
+        </StatusMessage>
       )}
 
       {storageError && (
-        <div className="cart-error" role="alert">
-          <p>{storageError}</p>
-          <button
-            type="button"
-            className="cart-notice__dismiss"
-            aria-label="Dismiss storage warning"
-            onClick={onDismissStorageError}
-          >
-            Dismiss
-          </button>
-        </div>
+        <StatusMessage
+          variant="error"
+          role="alert"
+          className="cart-section__status"
+          onDismiss={onDismissStorageError}
+          dismissLabel="Dismiss storage warning"
+        >
+          {storageError}
+        </StatusMessage>
+      )}
+
+      {cartActionFeedback && (
+        <StatusMessage variant="success" className="cart-section__status">
+          {cartActionFeedback}
+        </StatusMessage>
       )}
 
       {cartItems.length === 0 ? (
-        <p className="cart-section__empty">Your cart is empty.</p>
+        <EmptyState
+          align="left"
+          title="Your cart is empty."
+          description="Select a product variant from the marketplace catalog to add it here."
+          action={
+            <a href="#products" className="cart-section__browse-link">
+              Browse marketplace catalog
+            </a>
+          }
+        />
       ) : (
         <>
           <div className="cart-items">
@@ -76,12 +100,14 @@ export function CartSection({
               const product = products.find(
                 (candidate) => candidate.id === item.productId
               );
+              const seller = getSellerById(sellers, product?.sellerId);
 
               return (
                 <CartItemRow
                   key={`${item.productId}-${item.variantSku}`}
                   item={item}
                   product={product}
+                  sellerStoreName={seller?.storeName}
                   onQuantityChange={onQuantityChange}
                   onRemove={onRemoveFromCart}
                 />

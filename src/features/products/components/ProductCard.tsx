@@ -1,20 +1,33 @@
 import { useState } from "react";
+import { formatCurrency } from "../../../lib/formatCurrency";
+import type { Seller } from "../../sellers/types";
+import { sellers as defaultSellers } from "../../sellers/data";
+import { getSellerById } from "../../sellers/sellerLookup";
+import { SellerBadge } from "../../sellers/components/SellerBadge";
 import type { Product } from "../types";
 import { checkAvailability } from "../checkAvailability";
 import "./ProductCard.css";
 
 type ProductCardProps = {
   product: Product;
+  seller?: Seller | null;
   onAddToCart: (productId: string, variantSku: string) => void;
   onViewDetails?: (product: Product) => void;
+  onViewSeller?: (sellerId: string) => void;
 };
 
 export function ProductCard({
   product,
+  seller,
   onAddToCart,
   onViewDetails,
+  onViewSeller,
 }: ProductCardProps) {
-  // Initialize selection using the first available variant
+  const resolvedSeller =
+    seller === undefined
+      ? getSellerById(defaultSellers, product.sellerId)
+      : seller;
+
   const firstVariant = product.variants[0];
 
   const [selectedColor, setSelectedColor] = useState(
@@ -25,19 +38,16 @@ export function ProductCard({
     firstVariant?.size ?? ""
   );
 
-  // Find the exact variant matching the selected color and size
   const selectedVariant = product.variants.find(
     (variant) =>
       variant.color === selectedColor && variant.size === selectedSize
   );
 
-  // Check whether the selected combination is available
   const availability =
     selectedColor && selectedSize
       ? checkAvailability(product, selectedColor, selectedSize)
       : null;
 
-  // Get unique color and size options
   const colorOptions = [
     ...new Set(product.variants.map((variant) => variant.color)),
   ];
@@ -46,7 +56,6 @@ export function ProductCard({
     ...new Set(product.variants.map((variant) => variant.size)),
   ];
 
-  // Dynamic image based on selected variant or selected color, falling back to primary image
   const colorPreviewImageUrl = product.variants.find(
     (variant) => variant.color === selectedColor && variant.imageUrl
   )?.imageUrl;
@@ -56,17 +65,11 @@ export function ProductCard({
       ? undefined
       : (selectedVariant?.imageUrl ?? colorPreviewImageUrl ?? product.images[0]);
 
-  // Format price
-  const formattedPrice = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: product.currency,
-  }).format(product.priceCents / 100);
+  const formattedPrice = formatCurrency(product.priceCents, product.currency);
 
-  // Disable adding unavailable or out-of-stock variants
   const isAddToCartDisabled =
     !selectedVariant || availability !== "in-stock";
 
-  // Handle Add to Cart
   const handleAddToCartClick = () => {
     if (!selectedVariant || isAddToCartDisabled) {
       return;
@@ -103,20 +106,49 @@ export function ProductCard({
       )}
 
       <div className="product-card__content">
-        {/* Product information */}
         <p className="product-card__category">
           <span>{product.category}</span>
-          <span aria-hidden="true"> · </span>
-          <span>Atelier North</span>
         </p>
 
         <h3 className="product-card__name">{product.name}</h3>
+
+        <div className="product-card__seller-row">
+          {resolvedSeller ? (
+            onViewSeller ? (
+              <button
+                type="button"
+                className="product-card__seller-link"
+                aria-label={`View seller profile for ${resolvedSeller.storeName}`}
+                onClick={() => onViewSeller(resolvedSeller.id)}
+              >
+                <span className="product-card__seller-store">
+                  {resolvedSeller.storeName}
+                </span>
+                <SellerBadge
+                  isVerified={resolvedSeller.isVerified}
+                  variant="compact"
+                />
+              </button>
+            ) : (
+              <span className="product-card__seller-static">
+                <span>{resolvedSeller.storeName}</span>
+                <SellerBadge
+                  isVerified={resolvedSeller.isVerified}
+                  variant="compact"
+                />
+              </span>
+            )
+          ) : (
+            <span className="product-card__seller-missing">
+              Seller information unavailable
+            </span>
+          )}
+        </div>
 
         <p className="product-card__description">{product.description}</p>
 
         <p className="product-card__price tabular-nums">{formattedPrice}</p>
 
-        {/* Color selection */}
         <fieldset className="product-options">
           <legend>Color</legend>
 
@@ -139,7 +171,6 @@ export function ProductCard({
           </div>
         </fieldset>
 
-        {/* Size selection */}
         <fieldset className="product-options">
           <legend>Size</legend>
 
@@ -162,7 +193,6 @@ export function ProductCard({
           </div>
         </fieldset>
 
-        {/* Footer anchored to card bottom for cross-row CTA alignment */}
         <div className="product-card__footer">
           <p className="product-options__summary" aria-live="polite">
             Selected: {selectedColor || "—"} / {selectedSize || "—"}

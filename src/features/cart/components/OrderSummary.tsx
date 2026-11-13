@@ -1,12 +1,11 @@
+import { formatCurrency } from "../../../lib/formatCurrency";
+
 type OrderSummaryProps = {
   subtotalCents: number;
 };
 
 export function OrderSummary({ subtotalCents }: OrderSummaryProps) {
-  const formattedSubtotal = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(subtotalCents / 100);
+  const formattedSubtotal = formatCurrency(subtotalCents, "USD");
 
   return (
     <div className="cart-summary">

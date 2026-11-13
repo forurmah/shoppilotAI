@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
 import { AboutSection } from "./components/AboutSection";
+import { Footer } from "./components/layout/Footer";
+import { StatusMessage } from "./components/ui/StatusMessage";
 import { products } from "./features/products/data";
 import { checkAvailability } from "./features/products/checkAvailability";
 import {
@@ -18,10 +20,14 @@ import type { Product } from "./features/products/types";
 import { CatalogToolbar } from "./features/products/components/CatalogToolbar";
 import { CatalogGrid } from "./features/products/components/CatalogGrid";
 import { ProductDetailModal } from "./features/products/components/ProductDetailModal";
+import { sellers } from "./features/sellers/data";
+import { getSellerById } from "./features/sellers/sellerLookup";
+import { SellerProfileModal } from "./features/sellers/components/SellerProfileModal";
+import { SellerWorkspaceNoticeModal } from "./features/sellers/components/SellerWorkspaceNoticeModal";
 import type { CartItem } from "./features/cart/types";
 import { addToCart } from "./features/cart/addToCart";
 import { updateCartQuantity } from "./features/cart/updateCartQuantity";
-import { removeFromCart } from "./features/cart/removefromcart";
+import { removeFromCart } from "./features/cart/removeFromCart";
 import { calculateCartTotals } from "./features/cart/calculateCartTotals";
 import { saveCart } from "./features/cart/cartStorage";
 import {
@@ -35,8 +41,11 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [priceRange, setPriceRange] = useState<PriceRangeFilter>("all");
   const [sortOption, setSortOption] = useState<SortOption>("default");
+
   const [selectedProductForDetails, setSelectedProductForDetails] =
     useState<Product | null>(null);
+  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
+  const [isWorkspaceNoticeOpen, setIsWorkspaceNoticeOpen] = useState(false);
 
   // Shopping cart state with lazy localStorage initialization + reconciliation notice
   const [initialHydration] = useState(() => hydrateCartWithReport(products));
@@ -46,6 +55,7 @@ function App() {
   );
   const [storageError, setStorageError] = useState<string | null>(null);
   const [cartMessage, setCartMessage] = useState("");
+  const [cartActionFeedback, setCartActionFeedback] = useState("");
 
   // Persist cart changes to localStorage
   useEffect(() => {
@@ -120,12 +130,19 @@ function App() {
     setCartItems(nextItems);
     checkStoragePersistence(nextItems);
     setCartMessage(`${product.name} added to cart.`);
+    setCartActionFeedback(
+      `Added ${product.name} (${variant.color} / ${variant.size}) to your cart.`
+    );
   };
 
   const handleRemoveFromCart = (productId: string, variantSku: string) => {
+    const product = products.find((item) => item.id === productId);
     const nextItems = removeFromCart(cartItems, productId, variantSku);
     setCartItems(nextItems);
     checkStoragePersistence(nextItems);
+    setCartActionFeedback(
+      `Removed ${product?.name ?? variantSku} from your cart.`
+    );
   };
 
   // Handle increasing or decreasing cart quantity
@@ -157,6 +174,16 @@ function App() {
     );
     setCartItems(nextItems);
     checkStoragePersistence(nextItems);
+
+    const updatedItem = nextItems.find(
+      (item) =>
+        item.productId === productId && item.variantSku === variantSku
+    );
+    if (updatedItem) {
+      setCartActionFeedback(
+        `Updated ${product.name} (${variant.color} / ${variant.size}) quantity to ${updatedItem.quantity}.`
+      );
+    }
   };
 
   const handleClearFilters = () => {
@@ -166,13 +193,23 @@ function App() {
     setSortOption("default");
   };
 
+  const handleOpenSellerFromCatalog = (sellerId: string) => {
+    setSelectedProductForDetails(null);
+    setSelectedSellerId(sellerId);
+  };
+
+  const handleSelectProductFromSeller = (product: Product) => {
+    setSelectedSellerId(null);
+    setSelectedProductForDetails(product);
+  };
+
   // Unique categories
   const categories = [
     ...new Set(products.map((product) => product.category)),
   ];
 
-  // Derive filtered and sorted catalog products
-  const searchedProducts = searchProducts(products, searchQuery);
+  // Derive filtered and sorted catalog products (searching product name, category, and store name)
+  const searchedProducts = searchProducts(products, searchQuery, sellers);
   const categoryFilteredProducts = filterProductsByCategory(
     searchedProducts,
     selectedCategory
@@ -189,20 +226,43 @@ function App() {
     priceRange !== "all" ||
     sortOption !== "default";
 
+  const selectedProductSeller = selectedProductForDetails
+    ? (getSellerById(sellers, selectedProductForDetails.sellerId) ?? null)
+    : undefined;
+
   return (
     <>
-      <Header cartCount={cartCount} />
+      <Header
+        cartCount={cartCount}
+        onOpenSellerWorkspace={() => setIsWorkspaceNoticeOpen(true)}
+      />
 
       <main id="home">
-        <HeroSection />
+        <HeroSection
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          sellerCount={sellers.length}
+          productCount={products.length}
+        />
 
         <section id="products" className="catalog">
-          <h2>Our Products</h2>
+          <div className="catalog__header">
+            <h2>Marketplace Catalog</h2>
+            <p className="catalog__subcopy">
+              Click any store name to view seller profile &amp; verification
+              details.
+            </p>
+          </div>
 
           {cartMessage && (
-            <p className="catalog__status" role="status">
+            <StatusMessage
+              variant="info"
+              className="catalog__status"
+              onDismiss={() => setCartMessage("")}
+              dismissLabel="Dismiss catalog message"
+            >
               {cartMessage}
-            </p>
+            </StatusMessage>
           )}
 
           <CatalogToolbar
@@ -222,9 +282,11 @@ function App() {
 
           <CatalogGrid
             products={sortedProducts}
+            sellers={sellers}
             totalProductsCount={products.length}
             onAddToCart={handleAddToCart}
             onViewDetails={setSelectedProductForDetails}
+            onViewSeller={handleOpenSellerFromCatalog}
             onClearFilters={handleClearFilters}
           />
         </section>
@@ -232,12 +294,14 @@ function App() {
         <CartSection
           cartItems={cartItems}
           products={products}
+          sellers={sellers}
           cartCount={cartCount}
           subtotalCents={subtotalCents}
           hydrationNotice={hydrationNotice}
           onDismissHydrationNotice={() => setHydrationNotice(null)}
           storageError={storageError}
           onDismissStorageError={() => setStorageError(null)}
+          cartActionFeedback={cartActionFeedback}
           onQuantityChange={handleQuantityChange}
           onRemoveFromCart={handleRemoveFromCart}
         />
@@ -245,10 +309,31 @@ function App() {
         <AboutSection />
       </main>
 
+      <Footer
+        sellerCount={sellers.length}
+        productCount={products.length}
+        onOpenSellerWorkspace={() => setIsWorkspaceNoticeOpen(true)}
+      />
+
       <ProductDetailModal
         product={selectedProductForDetails}
+        seller={selectedProductSeller}
         onClose={() => setSelectedProductForDetails(null)}
         onAddToCart={handleAddToCart}
+        onViewSeller={handleOpenSellerFromCatalog}
+      />
+
+      <SellerProfileModal
+        sellerId={selectedSellerId}
+        sellers={sellers}
+        products={products}
+        onClose={() => setSelectedSellerId(null)}
+        onSelectProduct={handleSelectProductFromSeller}
+      />
+
+      <SellerWorkspaceNoticeModal
+        isOpen={isWorkspaceNoticeOpen}
+        onClose={() => setIsWorkspaceNoticeOpen(false)}
       />
     </>
   );

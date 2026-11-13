@@ -91,4 +91,35 @@ describe("ProductDetailModal", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it("calls onViewSeller and supports a missing-seller fallback state", () => {
+    const onViewSeller = vi.fn();
+
+    const { rerender } = render(
+      <ProductDetailModal
+        product={products[0]}
+        onClose={vi.fn()}
+        onAddToCart={vi.fn()}
+        onViewSeller={onViewSeller}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /view seller profile/i })
+    );
+    expect(onViewSeller).toHaveBeenCalledWith("atelier-north");
+
+    rerender(
+      <ProductDetailModal
+        product={products[0]}
+        seller={null}
+        onClose={vi.fn()}
+        onAddToCart={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByText(/seller information unavailable/i)
+    ).toBeInTheDocument();
+  });
 });

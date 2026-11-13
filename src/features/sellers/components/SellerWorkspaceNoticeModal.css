@@ -1,0 +1,35 @@
+.workspace-modal__title {
+  margin: 18px 0 10px;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-forest);
+}
+
+.workspace-modal__copy {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-subtle-text);
+}
+
+.workspace-modal__ack {
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 1px solid var(--color-burgundy);
+  border-radius: 8px;
+  background-color: var(--color-burgundy);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.workspace-modal__ack:hover {
+  background-color: var(--color-burgundy-hover);
+}
+
+.workspace-modal__ack:focus-visible {
+  outline: 2px solid var(--color-forest);
+  outline-offset: 2px;
+}

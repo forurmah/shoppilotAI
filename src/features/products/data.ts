@@ -2,6 +2,7 @@ import type { Product } from "./types";
 
 export const hoodie: Product = {
   id: "hoodie-001",
+  sellerId: "atelier-north",
   name: "Essential Oversized One",
   description: "Comfortable oversized cotton hoodie",
   category: "Hoodies",
@@ -39,6 +40,7 @@ export const hoodie: Product = {
 };
 export const classicTshirt: Product = {
   id: "tshirt-001",
+  sellerId: "atelier-north",
   name: "Classic Cotton T-Shirt",
   description:
     "A comfortable everyday cotton T-shirt with a relaxed fit.",
@@ -77,6 +79,7 @@ export const classicTshirt: Product = {
 };
 export const straightLegJeans: Product = {
   id: "jeans-001",
+  sellerId: "loom-and-indigo",
   name: "Straight-Leg Jeans",
   description:
     "Classic straight-leg denim jeans designed for everyday comfort and style.",
@@ -123,6 +126,7 @@ export const straightLegJeans: Product = {
 };
 export const everydayJacket: Product = {
   id: "jacket-001",
+  sellerId: "pinewood-outpost",
   name: "Everyday Jacket",
   description:
     "A versatile lightweight jacket for casual outfits and everyday wear.",
@@ -168,6 +172,7 @@ export const everydayJacket: Product = {
 };
 export const relaxedSweatshirt: Product = {
   id: "sweatshirt-001",
+  sellerId: "loom-and-indigo",
   name: "Relaxed Sweatshirt",
   description:
     "A soft cotton-blend sweatshirt with a relaxed fit for everyday comfort.",
